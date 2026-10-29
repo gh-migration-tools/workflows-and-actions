@@ -1,0 +1,44 @@
+name: 'Setup: Build and publish Windows Docker image'
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+      packages: write
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7.0.1
+
+      - name: Set image name
+        env:
+          REPOSITORY_OWNER: ${{ github.repository_owner }}
+        run: |
+          $owner = $env:REPOSITORY_OWNER.ToLowerInvariant()
+          "IMAGE=ghcr.io/$owner/servercore:latest" >> $env:GITHUB_ENV
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build image
+        env:
+          SOURCE_URL: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          docker build `
+            --file tests/docker/Dockerfile `
+            --tag "$env:IMAGE" `
+            --label "org.opencontainers.image.source=$env:SOURCE_URL" `
+            tests/docker
+
+      - name: Push image
+        run: docker push "$env:IMAGE"
