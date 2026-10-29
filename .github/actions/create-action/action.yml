@@ -1,0 +1,24 @@
+name: Create Action
+description: Creates an composite action at runtime
+
+inputs:
+  name:
+    description: The name of the composite action
+    required: true
+  content:
+    description: The content of the composite action
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Create Action
+      shell: bash
+      env:
+        NAME: ${{ inputs.name }}
+        CONTENT: ${{ inputs.content }}
+      run: |
+        mkdir -p ./${NAME} &&
+        cat <<DYNAMIC_ACTION_EOF >./${NAME}/action.yml
+        $(echo "${CONTENT}" | sed -E "s/\\\$\\{\\{/\\\${{'$'}}{{/g")
+        DYNAMIC_ACTION_EOF

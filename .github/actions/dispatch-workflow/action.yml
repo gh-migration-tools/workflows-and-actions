@@ -1,0 +1,77 @@
+name: Dispatch a workflow_dispatch workflow run
+description: Dispatches a workflow_dispatch workflow run in a repository and polls it until completion, refreshing its GitHub App token as needed for long-running downstream runs
+
+inputs:
+  client-id:
+    description: GitHub App client ID
+    required: true
+  private-key:
+    description: GitHub App private key
+    required: true
+  api-url:
+    description: GitHub API URL
+    required: false
+    default: https://api.github.com
+  owner-repo:
+    description: Repository name with owner
+    required: true
+  ref:
+    description: The branch, tag or SHA
+    required: true
+  workflow-file:
+    description: Workflow file name
+    required: true
+  payload-inputs-json:
+    description: JSON object string passed as workflow_dispatch inputs
+    required: false
+    default: '{}'
+  poll-interval-seconds:
+    description: Poll interval seconds
+    required: false
+    default: 15
+
+outputs:
+  run-id:
+    description: The run ID
+    value: ${{ steps.dispatch_workflow.outputs.run_id }}
+  run-number:
+    description: The run number
+    value: ${{ steps.dispatch_workflow.outputs.run_number }}
+  run-name:
+    description: The run name
+    value: ${{ steps.dispatch_workflow.outputs.run_name }}
+  status:
+    description: The run status
+    value: ${{ steps.dispatch_workflow.outputs.status }}
+  conclusion:
+    description: The run conclusion
+    value: ${{ steps.dispatch_workflow.outputs.conclusion }}
+  workflow-id:
+    description: The workflow ID
+    value: ${{ steps.dispatch_workflow.outputs.workflow_id }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Dispatch workflow
+      id: dispatch_workflow
+      shell: bash
+      env:
+        PYTHONUNBUFFERED: "1"
+        APP_CLIENT_ID: ${{ inputs.client-id }}
+        APP_PRIVATE_KEY: ${{ inputs.private-key }}
+        API_URL: ${{ inputs.api-url }}
+        OWNER_REPO: ${{ inputs.owner-repo }}
+        REF: ${{ inputs.ref }}
+        WORKFLOW_FILE: ${{ inputs.workflow-file }}
+        PAYLOAD_INPUTS_JSON: ${{ inputs.payload-inputs-json }}
+        POLL_INTERVAL_SECONDS: ${{ inputs.poll-interval-seconds }}
+      run: |
+        python3 -u "${{ github.action_path }}/dispatch_workflow.py" \
+          --app-client-id "$APP_CLIENT_ID" \
+          --api-url "$API_URL" \
+          --owner-repo "$OWNER_REPO" \
+          --ref "$REF" \
+          --workflow-file "$WORKFLOW_FILE" \
+          --payload-inputs-json "$PAYLOAD_INPUTS_JSON" \
+          --poll-interval-seconds "$POLL_INTERVAL_SECONDS"

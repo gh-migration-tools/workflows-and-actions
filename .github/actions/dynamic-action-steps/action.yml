@@ -1,0 +1,72 @@
+# This action is based on the `dynamic-uses` action by @jenseng
+# https://github.com/jenseng/dynamic-uses/blob/main/action.yml
+name: Dynamic Action Steps
+description: Dynamically resolves and runs GitHub action steps
+
+inputs:
+  steps:
+    description: Steps
+    required: true
+  secrets-json:
+    description: Secrets as JSON object
+    required: false
+    default: '{}'
+  debug:
+    description: Show generated GitHub action
+    required: false
+    default: 'false'
+
+outputs:
+  outputs:
+    description: 'JSON-ified `outputs` from the action, e.g. `{"node-version": "v18.12.0", "cache-hit": true}`'
+    value: ${{ steps.run.outputs.outputs }}
+
+runs:
+  using: composite
+  steps:
+    - name: Setup
+      shell: bash
+      env:
+        STEPS: ${{ inputs.steps }}
+        STEPS_JSON: ${{ '${{ toJSON(steps) }}' }}
+        OUTPUTS: ${{ '${{ steps.aggregate_outputs.outputs.json }}' }}
+      run: |
+        mkdir -p ./__dynamic-action-steps-generated &&
+        cat <<DYNAMIC_ACTION_EOF >./__dynamic-action-steps-generated/action.yml
+        outputs:
+          outputs:
+            value: $OUTPUTS
+        runs:
+          using: composite
+          steps:
+            - name: Delete generated action
+              shell: bash
+              run: rm -rf ./__dynamic-action-steps-generated
+
+        $(echo "${STEPS}" | sed -E "s/^/    /; s/\\\$\\{\\{/\\\${{'$'}}{{/g")
+
+            - id: aggregate_outputs
+              name: Aggregate outputs
+              shell: bash
+              env:
+                STEPS_JSON: "$STEPS_JSON"
+              run: |
+                json=\$(jq -c '[to_entries[] | select(.key != "aggregate_outputs") | {key, value: .value.outputs}] | from_entries' <<< "\$STEPS_JSON")
+                echo "json=\$json" >> "\$GITHUB_OUTPUT"
+        DYNAMIC_ACTION_EOF
+
+    - name: Debug
+      if: ${{ inputs.debug != 'false' }}
+      shell: bash
+      run: cat ./__dynamic-action-steps-generated/action.yml
+
+    - name: Run
+      id: run
+      uses: ./__dynamic-action-steps-generated
+      env:
+        SECRETS_JSON: ${{ inputs.secrets-json }}
+
+    - name: Cleanup
+      if: always() && steps.run.outcome != 'success'
+      shell: bash
+      run: rm -rf ./__dynamic-action-steps-generated

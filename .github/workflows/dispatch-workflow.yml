@@ -1,0 +1,97 @@
+name: Dispatch a workflow_dispatch workflow run
+
+on:
+  workflow_call:
+    inputs:
+      client-id:
+        description: GitHub App client ID
+        required: true
+        type: string
+      api-url:
+        description: GitHub API URL
+        required: false
+        default: https://api.github.com
+        type: string
+      owner-repo:
+        description: Repository name with owner
+        required: true
+        type: string
+      ref:
+        description: The branch, tag or SHA
+        required: true
+        type: string
+      workflow-file:
+        description: Workflow file name
+        required: true
+        type: string
+      payload-inputs-json:
+        description: JSON object string passed as workflow_dispatch inputs
+        required: false
+        default: '{}'
+        type: string
+      poll-interval-seconds:
+        description: Poll interval seconds
+        required: false
+        type: string
+        default: 15
+      runner:
+        description: The runner label
+        required: false
+        default: ubuntu-latest
+        type: string
+      timeout-minutes:
+        description: The runner timeout
+        required: false
+        default: 360
+        type: number
+
+    secrets:
+      private-key:
+        description: GitHub App private key
+        required: true
+
+    outputs:
+      run-id:
+        description: The run ID
+        value: ${{ jobs.dispatch_workflow.outputs.run-id }}
+      run-number:
+        description: The run number
+        value: ${{ jobs.dispatch_workflow.outputs.run-number }}
+      run-name:
+        description: The run name
+        value: ${{ jobs.dispatch_workflow.outputs.run-name }}
+      status:
+        description: The run status
+        value: ${{ jobs.dispatch_workflow.outputs.status }}
+      conclusion:
+        description: The run conclusion
+        value: ${{ jobs.dispatch_workflow.outputs.conclusion }}
+      workflow-id:
+        description: The workflow ID
+        value: ${{ jobs.dispatch_workflow.outputs.workflow-id }}
+
+jobs:
+  dispatch_workflow:
+    name: Dispatch workflow
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: ${{ inputs.timeout-minutes }}
+    outputs:
+      run-id: ${{ steps.dispatch_workflow.outputs.run-id }}
+      run-number: ${{ steps.dispatch_workflow.outputs.run-number }}
+      run-name: ${{ steps.dispatch_workflow.outputs.run-name }}
+      status: ${{ steps.dispatch_workflow.outputs.status }}
+      conclusion: ${{ steps.dispatch_workflow.outputs.conclusion }}
+      workflow-id: ${{ steps.dispatch_workflow.outputs.workflow-id }}
+    steps:
+      - name: Dispatch workflow
+        uses: $/.github/actions/dispatch-workflow
+        id: dispatch_workflow
+        with:
+          client-id: ${{ inputs.client-id }}
+          private-key: ${{ secrets.private-key }}
+          api-url: ${{ inputs.api-url }}
+          owner-repo: ${{ inputs.owner-repo }}
+          ref: ${{ inputs.ref }}
+          workflow-file: ${{ inputs.workflow-file }}
+          payload-inputs-json: ${{ inputs.payload-inputs-json }}
+          poll-interval-seconds: ${{ inputs.poll-interval-seconds }}

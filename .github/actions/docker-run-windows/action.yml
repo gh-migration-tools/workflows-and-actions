@@ -1,0 +1,143 @@
+name: Docker Run Windows
+description: Runs a command in a Windows container
+
+inputs:
+  image:
+    description: Docker image
+    required: true
+  shell:
+    description: 'Docker image shell to run the command in. Valid values: cmd, powershell, pwsh, bash'
+    required: true
+  env:
+    description: Environment variables
+    required: false
+    default: ''
+  mounts:
+    description: Docker mount specifications
+    required: false
+    default: ''
+  working-directory:
+    description: Working directory
+    required: false
+    default: ''
+  command:
+    description: Command to execute
+    required: true
+  debug:
+    description: Debug
+    required: false
+    default: 'false'
+
+outputs:
+  command:
+    description: The Docker run command
+    value: ${{ steps.docker_command.outputs.command-debug }}
+
+runs:
+  using: composite
+  steps:
+    - name: Validate inputs
+      shell: pwsh
+      env:
+        SHELL: ${{ inputs.shell }}
+      run: |
+        $validShells = @('cmd', 'powershell', 'pwsh', 'bash')
+
+        if ($env:SHELL -notin $validShells) {
+          Write-Error "Invalid shell '$env:SHELL'. Valid values are: $($validShells -join ', ')."
+          exit 1
+        }
+
+    - name: Create Docker command
+      id: docker_command
+      shell: pwsh
+      env:
+        DIR_GITHUB_WORKSPACE: C:\github_workspace
+        DIR_RUNNER_TEMP: C:\runner_temp
+        IMAGE: ${{ inputs.image }}
+        SHELL: ${{ inputs.shell }}
+        ENV: ${{ inputs.env }}
+        MOUNTS: ${{ inputs.mounts }}
+        WORKDIR: ${{ inputs.working-directory }}
+        COMMAND: ${{ inputs.command }}
+        DEBUG: ${{ inputs.debug }}
+      run: |
+        $workdir = [string]::IsNullOrWhiteSpace($env:WORKDIR) `
+          ? $env:DIR_GITHUB_WORKSPACE `
+          : $env:WORKDIR
+
+        $dockerArgs = @(
+          'run'
+          '--env', "GITHUB_WORKSPACE=$env:DIR_GITHUB_WORKSPACE"
+          '--env', "RUNNER_TEMP=$env:DIR_RUNNER_TEMP"
+          '--mount', "type=bind,source=$env:GITHUB_WORKSPACE,target=$env:DIR_GITHUB_WORKSPACE"
+          '--mount', "type=bind,source=$env:RUNNER_TEMP,target=$env:DIR_RUNNER_TEMP"
+        )
+
+        foreach ($entry in ($env:ENV -split '\r?\n')) {
+          if (-not [string]::IsNullOrWhiteSpace($entry)) {
+            $dockerArgs += @('--env', $entry)
+          }
+        }
+
+        foreach ($mount in ($env:MOUNTS -split '\r?\n')) {
+          if (-not [string]::IsNullOrWhiteSpace($mount)) {
+            $dockerArgs += @('--mount', $mount)
+          }
+        }
+
+        $dockerArgs += @(
+          '--workdir', $workdir
+          $env:IMAGE
+        )
+
+        switch ($env:SHELL.ToLowerInvariant()) {
+          'cmd' {
+            $command = ($env:COMMAND -split '\r?\n' |  Where-Object { -not [string]::IsNullOrWhiteSpace($_.Trim()) }) -join ' && '
+            $dockerArgs += @('cmd.exe', '/D', '/S', '/C', $command)
+          }
+          'powershell' {
+            $command = ($env:COMMAND -split '\r?\n' | Where-Object { -not [string]::IsNullOrWhiteSpace($_.Trim()) }) -join '; '
+            $dockerArgs += @('powershell.exe', '-NoLogo', '-NoProfile', '-Command', $command)
+          }
+          'pwsh' {
+            $command = ($env:COMMAND -split '\r?\n' |  Where-Object { -not [string]::IsNullOrWhiteSpace($_.Trim()) }) -join ' && '
+            $dockerArgs += @('pwsh.exe', '-NoLogo', '-NoProfile', '-Command', $command)
+          }
+          'bash' {
+            $command = ($env:COMMAND -split '\r?\n' |  Where-Object { -not [string]::IsNullOrWhiteSpace($_.Trim()) }) -join ' && '
+            $dockerArgs += @('bash', '--noprofile', '--norc', '-e', '-o', 'pipefail', '-c', $command)
+          }
+          default {
+            throw "Invalid shell '$env:SHELL'."
+          }
+        }
+
+        $delimiter = [guid]::NewGuid().ToString()
+        $commandDebug = "docker " + $($dockerArgs -join ' ')
+        $commandArgs = ConvertTo-Json -InputObject @($dockerArgs) -Compress
+
+        @(
+          "command-debug<<$delimiter"
+          $commandDebug
+          $delimiter
+          "command-args<<$delimiter"
+          $commandArgs
+          $delimiter
+        ) >> $env:GITHUB_OUTPUT
+
+    - name: Debug Docker command
+      shell: pwsh
+      if: ${{ inputs.debug == 'true' }}
+      env:
+        COMMAND_DEBUG: ${{ steps.docker_command.outputs.command-debug }}
+      run: Write-Host $env:COMMAND_DEBUG
+
+    - name: Run Docker command
+      shell: pwsh
+      env:
+        COMMAND_ARGS: ${{ steps.docker_command.outputs.command-args }}
+      run: |
+        $args = @(ConvertFrom-Json -InputObject $env:COMMAND_ARGS)
+        & docker @args
+        exit $LASTEXITCODE
