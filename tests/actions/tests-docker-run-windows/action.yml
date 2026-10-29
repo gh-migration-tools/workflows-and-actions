@@ -1,0 +1,52 @@
+name: Tests action docker-run-windows
+description: Tests action docker-run-windows
+
+inputs:
+  image:
+    description: Docker image
+    required: true
+  shell:
+    description: 'Docker image shell to run the command in. Valid values: cmd, powershell, pwsh, bash'
+    required: true
+  command:
+    description: Command to execute
+    required: true
+  expected-result:
+    description: Expected result
+    required: true
+  debug:
+    description: Debug
+    required: false
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - name: Act
+      id: act
+      uses: $/.github/actions/docker-run-windows
+      with:
+        image: ${{ inputs.image }}
+        shell: ${{ inputs.shell }}
+        command: ${{ inputs.command }}
+        debug: true
+
+    - name: Assert
+      shell: pwsh
+      env:
+        RESULT: ${{ toJSON(steps.act.outputs) }}
+        EXPECTED_RESULT: ${{ inputs.expected-result }}
+      run: |
+        $result = $env:RESULT
+        $expected_result = $env:EXPECTED_RESULT.TrimEnd()
+
+        Write-Output "result:"
+        Write-Output $result
+
+        if ($result -cne $expected_result) {
+            Write-Output ""
+            Write-Output "expected result:"
+            Write-Output $expected_result
+            Write-Output "::error::The result don't match the expected result."
+            exit 1
+        }

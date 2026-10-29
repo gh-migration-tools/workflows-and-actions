@@ -1,0 +1,74 @@
+name: Tests action 'create-action'
+
+on:
+  workflow_call:
+
+jobs:
+  should_create_action:
+    name: Should create action
+    runs-on: ubuntu-latest
+    steps:
+      - name: Act
+        uses: $/.github/actions/create-action
+        id: act
+        with:
+          name: __dynamic-created-action
+          content: |
+            inputs:
+              salutation:
+                required: true
+              firstname:
+                required: true
+              lastname:
+                required: true
+
+            outputs:
+              result:
+                value: ${{ '$' }}{{ steps.run.outputs.result }}
+
+            runs:
+              using: composite
+              steps:
+                - name: Run
+                  id: run
+                  shell: bash
+                  run: |
+                    result="Hello ${{ '$' }}{{ inputs.salutation }} ${{ '$' }}{{ inputs.firstname }} ${{ '$' }}{{ inputs.lastname }}"
+                    echo "$result"
+                    echo "result=$result" >> "$GITHUB_OUTPUT"
+
+      - name: Assert
+        shell: bash
+        run: |
+          file="./__dynamic-created-action/action.yml"
+
+          if [ ! -f "$file" ]; then
+            echo "::error::Required file not found: $file"
+            exit 1
+          fi
+
+          cat "$file"
+
+      - name: Act (dynamic created action)
+        id: run
+        uses: ./__dynamic-created-action
+        with:
+          salutation: Mr.
+          firstname: John
+          lastname: Doe
+
+      - name: Assert (dynamic created action)
+        shell: bash
+        env:
+          RESULT: ${{ steps.run.outputs.result }}
+        run: |
+          result="${RESULT}"
+          expected_result="Hello Mr. John Doe"
+
+          echo "result: $result"
+
+          if [[ "$result" != "$expected_result" ]]; then
+            echo "expected result: $expected_result"
+            echo "::error::The result don't match the expected result."
+            exit 1
+          fi

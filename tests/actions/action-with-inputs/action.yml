@@ -1,0 +1,29 @@
+name: Tests action
+description: Tests action with inputs
+
+inputs:
+  salutation:
+    description: salutation
+    required: true
+  firstname:
+    description: firstname
+    required: true
+  lastname:
+    description: lastname
+    required: true
+
+outputs:
+  result:
+    description: result
+    value: ${{ steps.run.outputs.result }}
+
+runs:
+  using: composite
+  steps:
+    - name: Run
+      id: run
+      shell: bash
+      run: |
+        result="Hello ${{ inputs.salutation }} ${{ inputs.firstname }} ${{ inputs.lastname }}"
+        echo "$result"
+        echo "result=$result" >> "$GITHUB_OUTPUT"

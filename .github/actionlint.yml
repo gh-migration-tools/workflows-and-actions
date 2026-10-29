@@ -1,0 +1,6 @@
+paths:
+  .github/**/*.{yml,yaml}:
+    ignore:
+      - '^specifying action "\$/.github/actions/[^"]+" in invalid format because ref is missing'
+      - '^specifying action "\$/tests/actions/[^"]+" in invalid format because ref is missing'
+      - '^reusable workflow call "\$/.github/workflows/[^"]+" at "uses" is not following the format'

@@ -1,0 +1,202 @@
+name: Tests action 'dynamic-action-steps'
+
+on:
+  workflow_call:
+
+jobs:
+  should_run_steps:
+    name: Should run steps
+    runs-on: ubuntu-latest
+    steps:
+      - name: Act
+        uses: $/.github/actions/dynamic-action-steps
+        with:
+          debug: true
+          steps: |
+            - name: Step 1
+              shell: bash
+              run: echo "Step 1"
+
+            - name: Step 2
+              shell: bash
+              run: echo "Step 2"
+
+            - name: Step 3
+              shell: bash
+              run: echo "Step 3"
+
+  should_run_nested_steps:
+    name: Should run nested steps
+    runs-on: ubuntu-latest
+    steps:
+      - name: Act
+        uses: $/.github/actions/dynamic-action-steps
+        with:
+          debug: true
+          steps: |
+            - name: Nested level 1 action
+              uses: $/.github/actions/dynamic-action-steps
+              with:
+                debug: true
+                steps: |
+                  - name: Nested level 2 action
+                    uses: $/.github/actions/dynamic-action-steps
+                    with:
+                      debug: true
+                      steps: |
+                        - name: Nested level 3 action
+                          uses: $/.github/actions/dynamic-action-steps
+                          with:
+                            debug: true
+                            steps: |
+                              - name: Step 1
+                                shell: bash
+                                run: echo "Step 1"
+
+                              - name: Step 2
+                                shell: bash
+                                run: echo "Step 2"
+
+                              - name: Step 3
+                                shell: bash
+                                run: echo "Step 3"
+
+  should_handle_evaluated_expressions:
+    name: Should handle evaluated expressions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Arrange
+        id: arrange
+        shell: bash
+        run: |
+          salutation="Mr."
+          firstname="John"
+          lastname="Doe"
+
+          {
+            echo "salutation=$salutation"
+            echo "firstname=$firstname"
+            echo "lastname=$lastname"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Act
+        id: act
+        uses: $/.github/actions/dynamic-action-steps
+        with:
+          debug: true
+          steps: |
+            - name: Use evaluated values
+              id: run
+              shell: bash
+              run: |
+                salutation="${{ steps.arrange.outputs.salutation }}"
+                firstname="${{ steps.arrange.outputs.firstname }}"
+                lastname="${{ steps.arrange.outputs.lastname }}"
+
+                result="Hello $salutation $firstname $lastname"
+
+                echo "result=$result" >> "$GITHUB_OUTPUT"
+
+      - name: Assert
+        shell: bash
+        env:
+          RESULT: ${{ toJSON(steps.act.outputs) }}
+        run: |
+          result="${RESULT}"
+          expected_result=$(cat <<'EOF'
+          {
+            "outputs": "{\"run\":{\"result\":\"Hello Mr. John Doe\"}}"
+          }
+          EOF
+          )
+
+          echo "result:"
+          echo "$result"
+
+          if [[ "$result" != "$expected_result" ]]; then
+            echo ""
+            echo "expected result:"
+            echo "$expected_result"
+            echo "::error::The result don't match the expected result."
+            exit 1
+          fi
+
+  should_handle_dynamically_evaluated_expressions:
+    name: Should handle dynamically evaluated expressions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Act
+        id: act
+        uses: $/.github/actions/dynamic-action-steps
+        with:
+          debug: true
+          steps: |
+            - name: Prepare values
+              id: values
+              shell: bash
+              run: |
+                salutation="Mr."
+                firstname="John"
+                lastname="Doe"
+
+                {
+                  echo "salutation=$salutation"
+                  echo "firstname=$firstname"
+                  echo "lastname=$lastname"
+                } >> "$GITHUB_OUTPUT"
+
+            - name: Use dynamically evaluated values
+              id: run
+              shell: bash
+              run: |
+                salutation="${{ '$' }}{{ steps.values.outputs.salutation }}"
+                firstname="${{ '$' }}{{ steps.values.outputs.firstname }}"
+                lastname="${{ '$' }}{{ steps.values.outputs.lastname }}"
+
+                result="Hello $salutation $firstname $lastname"
+
+                echo "result=$result" >> "$GITHUB_OUTPUT"
+
+      - name: Assert
+        shell: bash
+        env:
+          RESULT: ${{ toJSON(steps.act.outputs) }}
+        run: |
+          result="${RESULT}"
+          expected_result=$(cat <<'EOF'
+          {
+            "outputs": "{\"values\":{\"salutation\":\"Mr.\",\"firstname\":\"John\",\"lastname\":\"Doe\"},\"run\":{\"result\":\"Hello Mr. John Doe\"}}"
+          }
+          EOF
+          )
+
+          echo "result:"
+          echo "$result"
+
+          if [[ "$result" != "$expected_result" ]]; then
+            echo ""
+            echo "expected result:"
+            echo "$expected_result"
+            echo "::error::The result don't match the expected result."
+            exit 1
+          fi
+
+  should_handle_secrets:
+    name: Should handle secrets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Act
+        uses: $/.github/actions/dynamic-action-steps
+        with:
+          debug: true
+          secrets-json: ${{ toJSON(secrets) }}
+          steps: |
+            - name: Validate secret
+              shell: bash
+              env:
+                API_TOKEN: ${{ '$' }}{{ fromJSON(env.SECRETS_JSON).TESTS_API_TOKEN }}
+              run: |
+                if [[ "$API_TOKEN" != "api-token-value" ]]; then
+                  echo "::error::'TESTS_API_TOKEN' secret contains unexpected value"
+                  exit 1
+                fi

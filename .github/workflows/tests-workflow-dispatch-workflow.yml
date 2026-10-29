@@ -1,0 +1,85 @@
+name: Tests workflow 'dispatch-workflow'
+
+on:
+  workflow_call:
+
+jobs:
+  act:
+    name: Act
+    uses: $/.github/workflows/dispatch-workflow.yml
+    with:
+      client-id: ${{ vars.AUTHAPP_CLIENT_ID }}
+      owner-repo: ${{ github.repository }}
+      ref: main
+      workflow-file: tests-dispatch-workflow-target.yml
+      payload-inputs-json: |
+        {
+          "trigger": "workflow",
+          "firstname": "John",
+          "lastname": "Doe"
+        }
+    secrets:
+      private-key: ${{ secrets.AUTHAPP_PRIVATE_KEY }}
+
+  assert:
+    needs: act
+    name: Assert
+    runs-on: ubuntu-latest
+    steps:
+      - name: Assert
+        env:
+          RUN_ID: ${{ needs.act.outputs.run-id }}
+          RUN_NUMBER: ${{ needs.act.outputs.run-number }}
+          RUN_NAME: ${{ needs.act.outputs.run-name }}
+          STATUS: ${{ needs.act.outputs.status }}
+          CONCLUSION: ${{ needs.act.outputs.conclusion }}
+          WORKFLOW_ID: ${{ needs.act.outputs.workflow-id }}
+        run: |
+          error=false
+
+          if [ -z "${RUN_ID:-}" ]; then
+            echo "The workflow output 'run-id' is empty"
+            error=true
+          else
+            echo "run-id: ${RUN_ID}"
+          fi
+
+          if [ -z "${RUN_NUMBER:-}" ]; then
+            echo "The workflow output 'run-number' is empty"
+            error=true
+          else
+            echo "run-number: ${RUN_NUMBER}"
+          fi
+
+          if [ -z "${RUN_NAME:-}" ]; then
+            echo "The workflow output 'run-name' is empty"
+            error=true
+          else
+            echo "run-name: ${RUN_NAME}"
+          fi
+
+          if [ -z "${STATUS:-}" ]; then
+            echo "The workflow output 'status' is empty"
+            error=true
+          else
+            echo "status: ${STATUS}"
+          fi
+
+          if [ -z "${CONCLUSION:-}" ]; then
+            echo "The workflow output 'conclusion' is empty"
+            error=true
+          else
+            echo "conclusion: ${CONCLUSION}"
+          fi
+
+          if [ -z "${WORKFLOW_ID:-}" ]; then
+            echo "The workflow output 'workflow-id' is empty"
+            error=true
+          else
+            echo "workflow-id: ${WORKFLOW_ID}"
+          fi
+
+          if [ "$error" = true ]; then
+            echo "::error::Some 'trigger-repository-workflow.yml' workflow outputs are invalid"
+            exit 1
+          fi

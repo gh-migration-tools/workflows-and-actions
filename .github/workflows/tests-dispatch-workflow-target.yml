@@ -1,0 +1,28 @@
+name: 'Tests: dispatch_workflow target'
+run-name: tests_workflow_dispatch_workflow triggered by ${{ inputs.trigger }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      trigger:
+        description: "Trigger"
+        required: true
+        type: string
+      firstname:
+        description: "Firstname"
+        required: true
+        type: string
+      lastname:
+        description: "Lastname"
+        required: true
+        type: string
+
+jobs:
+  dispatch_workflow_test:
+    name: Dispatch workflow test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print name
+        run: |
+          echo "Hello ${{ inputs.firstname }} ${{ inputs.lastname }}"
+          sleep 60

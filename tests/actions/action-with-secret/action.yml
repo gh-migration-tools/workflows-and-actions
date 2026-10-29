@@ -1,0 +1,23 @@
+name: Tests action
+description: Tests action with secret
+
+inputs:
+  api-token:
+    description: api-token
+    required: true
+
+outputs:
+  result:
+    description: result
+    value: ${{ steps.run.outputs.result }}
+
+runs:
+  using: composite
+  steps:
+    - name: Run
+      id: run
+      shell: bash
+      run: |
+        result="${{ inputs.api-token }}"
+        echo "$result"
+        echo "result=$result" >> "$GITHUB_OUTPUT"

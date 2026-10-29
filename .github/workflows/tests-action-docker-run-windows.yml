@@ -1,0 +1,83 @@
+name: Tests action 'docker-run-windows'
+
+on:
+  workflow_call:
+
+jobs:
+  tests_action_docker_run_windows:
+    name: Tests action 'docker-run-windows' abc
+    runs-on: windows-latest
+    permissions:
+      contents: read
+      packages: read
+    env:
+      REGISTRY: ghcr.io
+      IMAGE: ghcr.io/gh-migration-tools/servercore:latest
+    steps:
+      - name: Docker login
+        uses: docker/login-action@v4.6.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker pull
+        id: docker_pull
+        shell: pwsh
+        run: docker pull $env:IMAGE
+
+      - name: Should run command via 'cmd'
+        uses: $/tests/actions/tests-docker-run-windows
+        if: ${{ always() && steps.docker_pull.outcome == 'success' }}
+        with:
+          image: ${{ env.IMAGE }}
+          shell: cmd
+          command: |
+            cd
+            ver
+          expected-result: |
+            {
+              "command": "docker run --env GITHUB_WORKSPACE=C:\\github_workspace --env RUNNER_TEMP=C:\\runner_temp --mount type=bind,source=D:\\a\\workflows-and-actions\\workflows-and-actions,target=C:\\github_workspace --mount type=bind,source=D:\\a\\_temp,target=C:\\runner_temp --workdir C:\\github_workspace ghcr.io/gh-migration-tools/servercore:latest cmd.exe /D /S /C cd && ver"
+            }
+
+      - name: Should run command via 'powershell'
+        uses: $/tests/actions/tests-docker-run-windows
+        if: ${{ always() && steps.docker_pull.outcome == 'success' }}
+        with:
+          image: ${{ env.IMAGE }}
+          shell: powershell
+          command: |
+            ($PWD).Path
+            $PSVersionTable.PSVersion.ToString()
+          expected-result: |
+            {
+              "command": "docker run --env GITHUB_WORKSPACE=C:\\github_workspace --env RUNNER_TEMP=C:\\runner_temp --mount type=bind,source=D:\\a\\workflows-and-actions\\workflows-and-actions,target=C:\\github_workspace --mount type=bind,source=D:\\a\\_temp,target=C:\\runner_temp --workdir C:\\github_workspace ghcr.io/gh-migration-tools/servercore:latest powershell.exe -NoLogo -NoProfile -Command ($PWD).Path; $PSVersionTable.PSVersion.ToString()"
+            }
+
+      - name: Should run command via 'pwsh'
+        uses: $/tests/actions/tests-docker-run-windows
+        if: ${{ always() && steps.docker_pull.outcome == 'success' }}
+        with:
+          image: ${{ env.IMAGE }}
+          shell: pwsh
+          command: |
+            ($PWD).Path
+            $PSVersionTable.PSVersion.ToString()
+          expected-result: |
+            {
+              "command": "docker run --env GITHUB_WORKSPACE=C:\\github_workspace --env RUNNER_TEMP=C:\\runner_temp --mount type=bind,source=D:\\a\\workflows-and-actions\\workflows-and-actions,target=C:\\github_workspace --mount type=bind,source=D:\\a\\_temp,target=C:\\runner_temp --workdir C:\\github_workspace ghcr.io/gh-migration-tools/servercore:latest pwsh.exe -NoLogo -NoProfile -Command ($PWD).Path && $PSVersionTable.PSVersion.ToString()"
+            }
+
+      - name: Should run command via 'bash'
+        uses: $/tests/actions/tests-docker-run-windows
+        if: ${{ always() && steps.docker_pull.outcome == 'success' }}
+        with:
+          image: ${{ env.IMAGE }}
+          shell: bash
+          command: |
+            pwd
+            echo "$BASH_VERSION"
+          expected-result: |
+            {
+              "command": "docker run --env GITHUB_WORKSPACE=C:\\github_workspace --env RUNNER_TEMP=C:\\runner_temp --mount type=bind,source=D:\\a\\workflows-and-actions\\workflows-and-actions,target=C:\\github_workspace --mount type=bind,source=D:\\a\\_temp,target=C:\\runner_temp --workdir C:\\github_workspace ghcr.io/gh-migration-tools/servercore:latest bash --noprofile --norc -e -o pipefail -c pwd && echo \"$BASH_VERSION\""
+            }

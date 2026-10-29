@@ -1,0 +1,122 @@
+# This workflow tests the workflows and actions in this repo
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/**'
+  pull_request:
+    paths:
+      - '.github/**'
+  workflow_dispatch:
+
+jobs:
+  setup:
+    name: Setup
+    runs-on: ubuntu-latest
+    outputs:
+      test-action-create-action: ${{ steps.changes.outputs.test-action-create-action }}
+      test-action-dispatch-workflow: ${{ steps.changes.outputs.test-action-dispatch-workflow }}
+      test-action-docker-run-windows: ${{ steps.changes.outputs.test-action-docker-run-windows }}
+      test-action-dynamic-action: ${{ steps.changes.outputs.test-action-dynamic-action }}
+      test-action-dynamic-action-steps: ${{ steps.changes.outputs.test-action-dynamic-action-steps }}
+      test-workflow-dispatch-workflow: ${{ steps.changes.outputs.test-workflow-dispatch-workflow }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 2
+
+      - name: Lint workflows and actions
+        uses: docker://rhysd/actionlint:latest
+        with:
+          args: -color -config-file .github/actionlint.yml
+
+      - name: Check workflows and actions chnages
+        id: changes
+        shell: bash
+        env:
+          ACTIONS: |
+            create-action
+            dispatch-workflow
+            docker-run-windows
+            dynamic-action
+            dynamic-action-steps
+          WORKFLOWS: |
+            dispatch-workflow
+        run: |
+          check_changed() {
+            ! git diff --quiet HEAD~1 HEAD -- "$1" || ! git diff --quiet HEAD~1 HEAD -- "$2"
+          }
+
+          while IFS= read -r name; do
+            [[ -n "$name" ]] || continue
+            changed=false
+            if check_changed \
+              ".github/actions/$name/action.yml" \
+              ".github/workflows/tests-action-$name.yml"; then
+              changed=true
+            fi
+            echo "test-action-$name=$changed" >> "$GITHUB_OUTPUT"
+          done <<< "$ACTIONS"
+
+          while IFS= read -r name; do
+            [[ -n "$name" ]] || continue
+            changed=false
+            if check_changed \
+              ".github/workflows/$name.yml" \
+              ".github/workflows/tests-workflow-$name.yml"; then
+              changed=true
+            fi
+            echo "test-workflow-$name=$changed" >> "$GITHUB_OUTPUT"
+          done <<< "$WORKFLOWS"
+
+  # -------------------------------------------------- #
+  # Tests workflows                                    #
+  # -------------------------------------------------- #
+  tests_workflow_dispatch_workflow:
+    if: ${{ needs.setup.outputs.test-workflow-dispatch-workflow == 'true' }}
+    needs: setup
+    name: Tests workflow 'dispatch-workflow'
+    uses: $/.github/workflows/tests-workflow-dispatch-workflow.yml
+    secrets: inherit
+
+  # -------------------------------------------------- #
+  # Tests actions                                      #
+  # -------------------------------------------------- #
+  tests_action_create_action:
+    if: ${{ needs.setup.outputs.test-action-create-action == 'true' }}
+    needs: setup
+    name: Tests action 'create-action'
+    uses: $/.github/workflows/tests-action-create-action.yml
+    secrets: inherit
+
+  tests_action_dispatch_workflow:
+    if: ${{ needs.setup.outputs.test-action-dispatch-workflow == 'true' }}
+    needs: setup
+    name: Tests action 'dispatch-workflow'
+    uses: $/.github/workflows/tests-action-dispatch-workflow.yml
+    secrets: inherit
+
+  tests_action_docker_run_windows:
+    if: ${{ needs.setup.outputs.test-action-docker-run-windows == 'true' }}
+    needs: setup
+    name: Tests action 'docker-run-windows'
+    uses: $/.github/workflows/tests-action-docker-run-windows.yml
+    secrets: inherit
+
+  tests_action_dynamic_action:
+    if: ${{ needs.setup.outputs.test-action-dynamic-action == 'true' }}
+    needs: setup
+    name: Tests action 'dynamic-action'
+    uses: $/.github/workflows/tests-action-dynamic-action.yml
+    secrets: inherit
+
+  tests_action_dynamic_action_steps:
+    if: ${{ needs.setup.outputs.test-action-dynamic-action-steps == 'true' }}
+    needs: setup
+    name: Tests action 'dynamic-action-steps'
+    uses: $/.github/workflows/tests-action-dynamic-action-steps.yml
+    secrets: inherit

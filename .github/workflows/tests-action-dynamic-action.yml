@@ -1,0 +1,247 @@
+name: Tests action 'dynamic-action'
+
+on:
+  workflow_call:
+
+jobs:
+  should_run_action_with_inline_json_inputs:
+    name: Should run action with inline JSON inputs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Act
+        uses: $/.github/actions/dynamic-action
+        id: act
+        with:
+          debug: true
+          uses: $/tests/actions/action-with-inputs
+          with: '{ "salutation": "Mr.", "firstname": "John", "lastname": "Doe" }'
+
+      - name: Assert
+        shell: bash
+        env:
+          RESULT: ${{ toJSON(steps.act.outputs) }}
+        run: |
+          result="${RESULT}"
+          expected_result=$(cat <<'EOF'
+          {
+            "outputs": "{\n  \"result\": \"Hello Mr. John Doe\"\n}"
+          }
+          EOF
+          )
+
+          echo "result:"
+          echo "$result"
+
+          if [[ "$result" != "$expected_result" ]]; then
+            echo ""
+            echo "expected result:"
+            echo "$expected_result"
+            echo "::error::The result don't match the expected result."
+            exit 1
+          fi
+
+  should_run_action_with_json_inputs:
+    name: Should run action with JSON inputs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Act
+        uses: $/.github/actions/dynamic-action
+        id: act
+        with:
+          debug: true
+          uses: $/tests/actions/action-with-inputs
+          with: |
+            {
+              "salutation": "Mr.",
+              "firstname": "John",
+              "lastname": "Doe"
+            }
+
+      - name: Assert
+        shell: bash
+        env:
+          RESULT: ${{ toJSON(steps.act.outputs) }}
+        run: |
+          result="${RESULT}"
+          expected_result=$(cat <<'EOF'
+          {
+            "outputs": "{\n  \"result\": \"Hello Mr. John Doe\"\n}"
+          }
+          EOF
+          )
+
+          echo "result:"
+          echo "$result"
+
+          if [[ "$result" != "$expected_result" ]]; then
+            echo ""
+            echo "expected result:"
+            echo "$expected_result"
+            echo "::error::The result don't match the expected result."
+            exit 1
+          fi
+
+  should_run_action_with_yaml_inputs:
+    name: Should run action with YAML inputs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Act
+        uses: $/.github/actions/dynamic-action
+        id: act
+        with:
+          debug: true
+          uses: $/tests/actions/action-with-inputs
+          with: |
+            salutation: 'Mr.'
+            firstname: 'John'
+            lastname: 'Doe'
+
+      - name: Assert
+        shell: bash
+        env:
+          RESULT: ${{ toJSON(steps.act.outputs) }}
+        run: |
+          result="${RESULT}"
+          expected_result=$(cat <<'EOF'
+          {
+            "outputs": "{\n  \"result\": \"Hello Mr. John Doe\"\n}"
+          }
+          EOF
+          )
+
+          echo "result:"
+          echo "$result"
+
+          if [[ "$result" != "$expected_result" ]]; then
+            echo ""
+            echo "expected result:"
+            echo "$expected_result"
+            echo "::error::The result don't match the expected result."
+            exit 1
+          fi
+
+  should_run_action_without_inputs:
+    name: Should run action with inputs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Act
+        uses: $/.github/actions/dynamic-action
+        id: act
+        with:
+          debug: true
+          uses: $/tests/actions/action-without-inputs
+
+      - name: Assert
+        shell: bash
+        env:
+          RESULT: ${{ toJson(steps.act.outputs) }}
+        run: |
+          result="${RESULT}"
+          expected_result=$(cat <<'EOF'
+          {
+            "outputs": "{\n  \"result\": \"Hello Mr. John Doe\"\n}"
+          }
+          EOF
+          )
+
+          echo "result:"
+          echo "$result"
+
+          if [[ "$result" != "$expected_result" ]]; then
+            echo ""
+            echo "expected result:"
+            echo "$expected_result"
+            echo "::error::The result don't match the expected result."
+            exit 1
+          fi
+
+  should_handle_evaluated_expressions:
+    name: Should handle evaluated expressions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Arrange
+        id: arrange
+        shell: bash
+        run: |
+          salutation="Mr."
+          firstname="John"
+          lastname="Doe"
+
+          {
+            echo "salutation=$salutation"
+            echo "firstname=$firstname"
+            echo "lastname=$lastname"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Act
+        uses: $/.github/actions/dynamic-action
+        id: act
+        with:
+          debug: true
+          uses: $/tests/actions/action-with-inputs
+          with: |
+            salutation: '${{ steps.arrange.outputs.salutation }}'
+            firstname: '${{ steps.arrange.outputs.firstname }}'
+            lastname: '${{ steps.arrange.outputs.lastname }}'
+
+      - name: Assert
+        shell: bash
+        env:
+          RESULT: ${{ toJSON(steps.act.outputs) }}
+        run: |
+          result="${RESULT}"
+          expected_result=$(cat <<'EOF'
+          {
+            "outputs": "{\n  \"result\": \"Hello Mr. John Doe\"\n}"
+          }
+          EOF
+          )
+
+          echo "result:"
+          echo "$result"
+
+          if [[ "$result" != "$expected_result" ]]; then
+            echo ""
+            echo "expected result:"
+            echo "$expected_result"
+            echo "::error::The result don't match the expected result."
+            exit 1
+          fi
+
+  should_handle_secrets:
+    name: Should handle secrets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Act
+        uses: $/.github/actions/dynamic-action
+        id: act
+        with:
+          debug: true
+          secrets-json: ${{ toJSON(secrets) }}
+          uses: $/tests/actions/action-with-secret
+          with: |
+            api-token: ${{ '$' }}{{ fromJSON(env.SECRETS_JSON).TESTS_API_TOKEN }}
+
+      - name: Assert
+        shell: bash
+        env:
+          RESULT: ${{ toJSON(steps.act.outputs) }}
+        run: |
+          result="${RESULT}"
+          expected_result=$(cat <<'EOF'
+          {
+            "outputs": "{\n  \"result\": \"api-token-value\"\n}"
+          }
+          EOF
+          )
+
+          echo "result:"
+          echo "$result"
+
+          if [[ "$result" != "$expected_result" ]]; then
+            echo ""
+            echo "expected result:"
+            echo "$expected_result"
+            echo "::error::The result don't match the expected result."
+            exit 1
+          fi
