@@ -1,0 +1,24 @@
+name: 'Examples: Run dynamic workflow'
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build
+    uses: $/.github/workflows/examples-dynamic-workflow.yml
+    with:
+      pre-build-steps: |
+        - name: Run pre-build step 1
+          shell: bash
+          run: echo "Execute pre-build step 1"
+        - name: Run pre-build step 2
+          shell: bash
+          run: echo "Execute pre-build step 2"
+      post-build-steps: |
+        - name: Run post-build step 1
+          shell: bash
+          run: echo "Execute post-build step 1"
+        - name: Run post-build step 2
+          shell: bash
+          run: echo "Execute post-build step 2"

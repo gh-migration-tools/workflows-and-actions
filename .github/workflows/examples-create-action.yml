@@ -1,0 +1,81 @@
+name: 'Examples: Create action'
+
+on:
+  workflow_dispatch:
+
+jobs:
+  create_and_run_action_with_static_data:
+    name: Create and run action with static data
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create action
+        uses: $/.github/actions/create-action
+        with:
+          name: __dynamic-created-action
+          content: |
+            inputs:
+              salutation:
+                required: true
+              firstname:
+                required: true
+              lastname:
+                required: true
+
+            outputs:
+              result:
+                value: ${{ '$' }}{{ steps.run.outputs.result }}
+
+            runs:
+              using: composite
+              steps:
+                - name: Run
+                  id: run
+                  shell: bash
+                  run: |
+                    result="Hello ${{ '$' }}{{ inputs.salutation }} ${{ '$' }}{{ inputs.firstname }} ${{ '$' }}{{ inputs.lastname }}"
+                    echo "$result"
+                    echo "result=$result" >> "$GITHUB_OUTPUT"
+
+      - name: Run action
+        id: run
+        uses: ./__dynamic-created-action
+        with:
+          salutation: Mr.
+          firstname: John
+          lastname: Doe
+
+      - name: Show run result
+        shell: bash
+        env:
+          RESULT: ${{ steps.run.outputs.result }}
+        run: |
+          echo "result: ${RESULT}"
+
+  create_and_run_action_with_loaded_data:
+    name: Create and run action with loaded data
+    runs-on: ubuntu-latest
+    steps:
+      - name: Load action data
+        id: load_action_data
+        uses: $/tests/actions/load-action-data
+
+      - name: Create action
+        uses: $/.github/actions/create-action
+        with:
+          name: ${{ steps.load_action_data.outputs.name }}
+          content: ${{ steps.load_action_data.outputs.content }}
+
+      - name: Run action
+        id: run
+        uses: $/.github/actions/dynamic-action
+        with:
+          debug: true
+          uses: ./${{ steps.load_action_data.outputs.name }}
+          with: ${{ steps.load_action_data.outputs.inputs }}
+
+      - name: Show run result
+        shell: bash
+        env:
+          RESULT: ${{ fromJSON(steps.run.outputs.outputs).result }}
+        run: |
+          echo "result: ${RESULT}"

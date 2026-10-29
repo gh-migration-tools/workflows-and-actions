@@ -1,0 +1,37 @@
+name: 'Examples: Dynamic workflow'
+
+on:
+  workflow_call:
+    inputs:
+      pre-build-steps:
+        description: Pre-build steps
+        type: string
+        required: false
+        default: ''
+      post-build-steps:
+        description: Post-build steps
+        type: string
+        required: false
+        default: ''
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run pre-build steps
+        uses: $/.github/actions/dynamic-action-steps
+        if: ${{ inputs.pre-build-steps != '' }}
+        with:
+          debug: true
+          steps: ${{ inputs.pre-build-steps }}
+
+      - name: Build
+        run: echo "Execute build step"
+
+      - name: Run post-build steps
+        uses: $/.github/actions/dynamic-action-steps
+        if: ${{ inputs.post-build-steps != '' }}
+        with:
+          debug: true
+          steps: ${{ inputs.post-build-steps }}

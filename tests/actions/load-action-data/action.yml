@@ -1,0 +1,69 @@
+name: Load action data
+description: Load action data
+
+outputs:
+  name:
+    description: name
+    value: ${{ steps.run.outputs.name }}
+  content:
+    description: content
+    value: ${{ steps.run.outputs.content }}
+  inputs:
+    description: inputs
+    value: ${{ steps.run.outputs.inputs }}
+
+runs:
+  using: composite
+  steps:
+    - name: Run
+      id: run
+      shell: bash
+      run: |
+        name="__dynamic-created-action"
+
+        content=$(cat <<'EOF'
+        inputs:
+          salutation:
+            required: true
+          firstname:
+            required: true
+          lastname:
+            required: true
+
+        outputs:
+          result:
+            value: ${{ '$' }}{{ steps.run.outputs.result }}
+
+        runs:
+          using: composite
+          steps:
+            - name: Run
+              id: run
+              shell: bash
+              run: |
+                result="Hello ${{ '$' }}{{ inputs.salutation }} ${{ '$' }}{{ inputs.firstname }} ${{ '$' }}{{ inputs.lastname }}"
+                echo "$result"
+                echo "result=$result" >> "$GITHUB_OUTPUT"
+        EOF
+        )
+
+        inputs=$(cat <<'EOF'
+        salutation: Mr.
+        firstname: John
+        lastname: Doe
+        EOF
+        )
+
+        delimiter="delimiter_${RANDOM}_${RANDOM}"
+
+        {
+          printf 'name=%s\n' "$name"
+
+          printf 'content<<%s\n' "$delimiter"
+          printf '%s\n' "$content"
+          printf '%s\n' "$delimiter"
+
+          printf 'inputs<<%s\n' "$delimiter"
+          printf '%s\n' "$inputs"
+          printf '%s\n' "$delimiter"
+        } >> "$GITHUB_OUTPUT"
