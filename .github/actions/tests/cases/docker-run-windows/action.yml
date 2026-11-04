@@ -24,7 +24,7 @@ runs:
   steps:
     - name: Act
       id: act
-      uses: $/.github/actions/docker-run-windows
+      uses: $/.github/actions/common/docker-run-windows
       with:
         image: ${{ inputs.image }}
         shell: ${{ inputs.shell }}

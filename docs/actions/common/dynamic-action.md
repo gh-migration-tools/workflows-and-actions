@@ -1,6 +1,6 @@
 # Action `dynamic-action`
 
-The [`dynamic-action`](../../.github/actions/dynamic-action/action.yml) action dynamically resolves and runs another GitHub action.
+The [`dynamic-action`](../../../.github/actions/common/dynamic-action/action.yml) action dynamically resolves and runs another GitHub action.
 
 > [!NOTE]
 > This action is based on the [`dynamic-uses`](https://github.com/jenseng/dynamic-uses/blob/main/action.yml) action by [@jenseng](https://github.com/jenseng)
@@ -27,7 +27,7 @@ The [`dynamic-action`](../../.github/actions/dynamic-action/action.yml) action d
 ```yaml
 steps:
   - name: Run
-    uses: $/.github/actions/dynamic-action
+    uses: $/.github/actions/common/dynamic-action
     with:
       uses: $/.github/actions/${{ inputs.action-name }}
 ```
@@ -38,7 +38,7 @@ steps:
 steps:
   - name: Run
     id: run
-    uses: $/.github/actions/dynamic-action
+    uses: $/.github/actions/common/dynamic-action
     with:
       uses: $/.github/actions/${{ inputs.action-name }}
 
@@ -101,7 +101,7 @@ steps:
       } >> "$GITHUB_OUTPUT"
 
   - name: Run
-    uses: $/.github/actions/dynamic-action
+    uses: $/.github/actions/common/dynamic-action
     with:
       uses: $/.github/actions/${{ inputs.action-name }}
       with: |
@@ -119,7 +119,7 @@ This example shows how to pass and use secrets that are evaluated at runtime.
 ```yaml
 steps:
   - name: Run
-    uses: $/.github/actions/dynamic-action
+    uses: $/.github/actions/common/dynamic-action
     with:
       secrets-json: ${{ toJSON(secrets) }}
       uses: $/.github/actions/call-api

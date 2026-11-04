@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Act
-        uses: $/.github/actions/dynamic-action-steps
+        uses: $/.github/actions/common/dynamic-action-steps
         with:
           debug: true
           steps: |
@@ -30,22 +30,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Act
-        uses: $/.github/actions/dynamic-action-steps
+        uses: $/.github/actions/common/dynamic-action-steps
         with:
           debug: true
           steps: |
             - name: Nested level 1 action
-              uses: $/.github/actions/dynamic-action-steps
+              uses: $/.github/actions/common/dynamic-action-steps
               with:
                 debug: true
                 steps: |
                   - name: Nested level 2 action
-                    uses: $/.github/actions/dynamic-action-steps
+                    uses: $/.github/actions/common/dynamic-action-steps
                     with:
                       debug: true
                       steps: |
                         - name: Nested level 3 action
-                          uses: $/.github/actions/dynamic-action-steps
+                          uses: $/.github/actions/common/dynamic-action-steps
                           with:
                             debug: true
                             steps: |
@@ -81,7 +81,7 @@ jobs:
 
       - name: Act
         id: act
-        uses: $/.github/actions/dynamic-action-steps
+        uses: $/.github/actions/common/dynamic-action-steps
         with:
           debug: true
           steps: |
@@ -127,7 +127,7 @@ jobs:
     steps:
       - name: Act
         id: act
-        uses: $/.github/actions/dynamic-action-steps
+        uses: $/.github/actions/common/dynamic-action-steps
         with:
           debug: true
           steps: |
@@ -186,7 +186,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Act
-        uses: $/.github/actions/dynamic-action-steps
+        uses: $/.github/actions/common/dynamic-action-steps
         with:
           debug: true
           secrets-json: ${{ toJSON(secrets) }}

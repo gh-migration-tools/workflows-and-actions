@@ -4,8 +4,8 @@ GitHub Actions **do not** support running workflows and actions with dynamic nam
 
 To get around this limitation use the `dynamic-action` action (see [example](#-dynamic-action-name)).
 
-- [Documentation](../docs/actions/dynamic-action.md)
-- [Source](../.github/actions/dynamic-action/action.yml)
+- [Documentation](../docs/actions/common/dynamic-action.md)
+- [Source](../.github/actions/common/dynamic-action/action.yml)
 
 ### ❌ Dynamic workflow name
 
@@ -83,7 +83,7 @@ jobs:
           - windows
     steps:
       - name: Build
-        uses: $/.github/actions/dynamic-action
+        uses: $/.github/actions/common/dynamic-action
         with:
           uses: $/.github/actions/build-${{ matrix.os }}
           with: |

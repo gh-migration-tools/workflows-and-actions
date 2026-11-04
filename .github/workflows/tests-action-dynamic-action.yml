@@ -9,11 +9,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Act
-        uses: $/.github/actions/dynamic-action
+        uses: $/.github/actions/common/dynamic-action
         id: act
         with:
           debug: true
-          uses: $/tests/actions/action-with-inputs
+          uses: $/.github/actions/tests/impl/action-with-inputs
           with: '{ "salutation": "Mr.", "firstname": "John", "lastname": "Doe" }'
 
       - name: Assert
@@ -45,11 +45,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Act
-        uses: $/.github/actions/dynamic-action
+        uses: $/.github/actions/common/dynamic-action
         id: act
         with:
           debug: true
-          uses: $/tests/actions/action-with-inputs
+          uses: $/.github/actions/tests/impl/action-with-inputs
           with: |
             {
               "salutation": "Mr.",
@@ -86,11 +86,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Act
-        uses: $/.github/actions/dynamic-action
+        uses: $/.github/actions/common/dynamic-action
         id: act
         with:
           debug: true
-          uses: $/tests/actions/action-with-inputs
+          uses: $/.github/actions/tests/impl/action-with-inputs
           with: |
             salutation: 'Mr.'
             firstname: 'John'
@@ -125,11 +125,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Act
-        uses: $/.github/actions/dynamic-action
+        uses: $/.github/actions/common/dynamic-action
         id: act
         with:
           debug: true
-          uses: $/tests/actions/action-without-inputs
+          uses: $/.github/actions/tests/impl/action-without-inputs
 
       - name: Assert
         shell: bash
@@ -174,11 +174,11 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Act
-        uses: $/.github/actions/dynamic-action
+        uses: $/.github/actions/common/dynamic-action
         id: act
         with:
           debug: true
-          uses: $/tests/actions/action-with-inputs
+          uses: $/.github/actions/tests/impl/action-with-inputs
           with: |
             salutation: '${{ steps.arrange.outputs.salutation }}'
             firstname: '${{ steps.arrange.outputs.firstname }}'
@@ -213,12 +213,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Act
-        uses: $/.github/actions/dynamic-action
+        uses: $/.github/actions/common/dynamic-action
         id: act
         with:
           debug: true
           secrets-json: ${{ toJSON(secrets) }}
-          uses: $/tests/actions/action-with-secret
+          uses: $/.github/actions/tests/impl/action-with-secret
           with: |
             api-token: ${{ '$' }}{{ fromJSON(env.SECRETS_JSON).TESTS_API_TOKEN }}
 

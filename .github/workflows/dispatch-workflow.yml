@@ -84,7 +84,7 @@ jobs:
       workflow-id: ${{ steps.dispatch_workflow.outputs.workflow-id }}
     steps:
       - name: Dispatch workflow
-        uses: $/.github/actions/dispatch-workflow
+        uses: $/.github/actions/common/dispatch-workflow
         id: dispatch_workflow
         with:
           client-id: ${{ inputs.client-id }}

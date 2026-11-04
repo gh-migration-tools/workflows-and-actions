@@ -1,6 +1,6 @@
 # Action `docker-run-windows`
 
-The [`docker-run-windows`](../../.github/actions/docker-run-windows/action.yml) action runs a command in a Windows container.
+The [`docker-run-windows`](../../../.github/actions/common/docker-run-windows/action.yml) action runs a command in a Windows container.
 
 ## Inputs
 
@@ -51,7 +51,7 @@ steps:
 
   - name: Run command
     id: run
-    uses: $/.github/actions/docker-run-windows
+    uses: $/.github/actions/common/docker-run-windows
     with:
       image: ${{ env.IMAGE }}
       shell: pwsh

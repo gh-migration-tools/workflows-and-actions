@@ -1,6 +1,6 @@
 # Action `dispatch-workflow`
 
-The [`dispatch-workflow`](../../.github/actions/dispatch-workflow/action.yml) action dispatches a `workflow_dispatch` workflow run in a repository and polls it until completion, refreshing its GitHub App token as needed for long-running downstream runs.
+The [`dispatch-workflow`](../../../.github/actions/common/dispatch-workflow/action.yml) action dispatches a `workflow_dispatch` workflow run in a repository and polls it until completion, refreshing its GitHub App token as needed for long-running downstream runs.
 
 > [!IMPORTANT]
 > This action requires an GitHub App with the following permissions:
@@ -40,7 +40,7 @@ The [`dispatch-workflow`](../../.github/actions/dispatch-workflow/action.yml) ac
 steps:
   - name: Dispatch workflow
     id: dispatch_workflow
-    uses: $/.github/actions/dispatch-workflow
+    uses: $/.github/actions/common/dispatch-workflow
     with:
       client-id: ${{ vars.GITHUB_APP_CLIENT_ID }}
       private-key: ${{ secrets.GITHUB_APP_PRIVATE_KEY }}

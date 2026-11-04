@@ -1,6 +1,6 @@
 # Action `dynamic-action-steps`
 
-The [`dynamic-action-steps`](../../.github/actions/dynamic-action-steps/action.yml) action dynamically resolves and runs GitHub Actions steps.
+The [`dynamic-action-steps`](../../../.github/actions/common/dynamic-action-steps/action.yml) action dynamically resolves and runs GitHub Actions steps.
 
 > [!NOTE]
 > This action is based on the [`dynamic-uses`](https://github.com/jenseng/dynamic-uses/blob/main/action.yml) action by [@jenseng](https://github.com/jenseng)
@@ -26,7 +26,7 @@ The [`dynamic-action-steps`](../../.github/actions/dynamic-action-steps/action.y
 ```yaml
 steps:
   - name: Run
-    uses: $/.github/actions/dynamic-action-steps
+    uses: $/.github/actions/common/dynamic-action-steps
     with:
       steps: |
         - name: Step 1
@@ -47,19 +47,19 @@ The `dynamic-action-steps` action supports the execution of actions which contai
 ```yaml
 steps:
   - name: Run
-    uses: $/.github/actions/dynamic-action-steps
+    uses: $/.github/actions/common/dynamic-action-steps
     with:
       steps: |
         - name: Nested level 1 action
-          uses: $/.github/actions/dynamic-action-steps
+          uses: $/.github/actions/common/dynamic-action-steps
           with:
             steps: |
               - name: Nested level 2 action
-                uses: $/.github/actions/dynamic-action-steps
+                uses: $/.github/actions/common/dynamic-action-steps
                 with:
                   steps: |
                     - name: Nested level 3 action
-                      uses: $/.github/actions/dynamic-action-steps
+                      uses: $/.github/actions/common/dynamic-action-steps
                       with:
                         steps: |
                           - name: Step 1
@@ -99,7 +99,7 @@ steps:
 
   - name: Run
     id: run
-    uses: $/.github/actions/dynamic-action-steps
+    uses: $/.github/actions/common/dynamic-action-steps
     with:
       debug: true
       steps: |
@@ -149,7 +149,7 @@ This example shows how to use expressions that are evaluated at runtime.
 steps:
   - name: Run
     id: run
-    uses: $/.github/actions/dynamic-action-steps
+    uses: $/.github/actions/common/dynamic-action-steps
     with:
       debug: true
       steps: |
@@ -218,7 +218,7 @@ This example shows how to pass and use secrets that are evaluated at runtime.
 ```yaml
 steps:
   - name: Run
-    uses: $/.github/actions/dynamic-action-steps
+    uses: $/.github/actions/common/dynamic-action-steps
     with:
       secrets-json: ${{ toJSON(secrets) }}
       steps: |

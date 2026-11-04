@@ -6,8 +6,8 @@ To get around this limitation use the `dispatch-workflow` action or workflow.
 
 The `dispatch-workflow` action or workflow dispatches a `workflow_dispatch` workflow run in a repository and polls it until completion, refreshing its GitHub App token as needed for long-running downstream runs.
 
-- Documentation [action](../docs/actions/dispatch-workflow.md) / [workflow](../docs/workflows/dispatch-workflow.md)
-- Source [action](../.github/actions/dispatch-workflow/action.yml) / [workflow](../.github/workflows/dispatch-workflow.yml)
+- Documentation [action](../docs/actions/common/dispatch-workflow.md) / [workflow](../docs/workflows/dispatch-workflow.md)
+- Source [action](../.github/actions/common/dispatch-workflow/action.yml) / [workflow](../.github/workflows/dispatch-workflow.yml)
 
 ## Examples
 
@@ -17,7 +17,7 @@ The `dispatch-workflow` action or workflow dispatches a `workflow_dispatch` work
 steps:
   - name: Dispatch workflow
     id: dispatch_workflow
-    uses: $/.github/actions/dispatch-workflow
+    uses: $/.github/actions/common/dispatch-workflow
     with:
       client-id: ${{ vars.GITHUB_APP_CLIENT_ID }}
       private-key: ${{ secrets.GITHUB_APP_PRIVATE_KEY }}

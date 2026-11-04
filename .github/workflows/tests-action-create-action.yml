@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Act
-        uses: $/.github/actions/create-action
+        uses: $/.github/actions/common/create-action
         id: act
         with:
           name: __dynamic-created-action

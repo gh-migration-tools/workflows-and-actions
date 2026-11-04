@@ -14,8 +14,8 @@ jobs:
 
 For workflows that require Windows containers, use the Docker CLI or the `docker-run-windows` action.
 
-- [Documentation](../docs/actions/docker-run-windows.md)
-- [Source](../.github/actions/docker-run-windows/action.yml)
+- [Documentation](../docs/actions/common/docker-run-windows.md)
+- [Source](../.github/actions/common/docker-run-windows/action.yml)
 
 ## Examples
 
@@ -82,7 +82,7 @@ Use the `docker-run-windows` action to run commands in a Windows container using
 
 ```yaml
 - name: Run command
-  uses: $/.github/actions/docker-run-windows
+  uses: $/.github/actions/common/docker-run-windows
   with:
     image: ${{ env.IMAGE }}
     shell: pwsh
@@ -105,4 +105,4 @@ Use the `docker-run-windows` action to run commands in a Windows container using
 > - Mount the directories whose contents you need to keep, such as the workspace, temporary or build artifacts directory. Otherwise, files created only inside the container will be lost when it stops.
 
 > [!TIP]
-> An example for installing additional shells on a Windows image can be found in this [Dockerfile](../tests/docker/Dockerfile).
+> An example for installing additional shells on a Windows image can be found in this [Dockerfile](../docker/Dockerfile).

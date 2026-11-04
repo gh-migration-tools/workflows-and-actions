@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Act
-        uses: $/.github/actions/dispatch-workflow
+        uses: $/.github/actions/common/dispatch-workflow
         id: act
         with:
           client-id: ${{ vars.AUTHAPP_CLIENT_ID }}

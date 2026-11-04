@@ -5,7 +5,7 @@ on:
 
 jobs:
   tests_action_docker_run_windows:
-    name: Tests action 'docker-run-windows' abc
+    name: Tests action 'docker-run-windows'
     runs-on: windows-latest
     permissions:
       contents: read
@@ -27,7 +27,7 @@ jobs:
         run: docker pull $env:IMAGE
 
       - name: Should run command via 'cmd'
-        uses: $/tests/actions/tests-docker-run-windows
+        uses: $/.github/actions/tests/cases/docker-run-windows
         if: ${{ always() && steps.docker_pull.outcome == 'success' }}
         with:
           image: ${{ env.IMAGE }}
@@ -41,7 +41,7 @@ jobs:
             }
 
       - name: Should run command via 'powershell'
-        uses: $/tests/actions/tests-docker-run-windows
+        uses: $/.github/actions/tests/cases/docker-run-windows
         if: ${{ always() && steps.docker_pull.outcome == 'success' }}
         with:
           image: ${{ env.IMAGE }}
@@ -55,7 +55,7 @@ jobs:
             }
 
       - name: Should run command via 'pwsh'
-        uses: $/tests/actions/tests-docker-run-windows
+        uses: $/.github/actions/tests/cases/docker-run-windows
         if: ${{ always() && steps.docker_pull.outcome == 'success' }}
         with:
           image: ${{ env.IMAGE }}
@@ -69,7 +69,7 @@ jobs:
             }
 
       - name: Should run command via 'bash'
-        uses: $/tests/actions/tests-docker-run-windows
+        uses: $/.github/actions/tests/cases/docker-run-windows
         if: ${{ always() && steps.docker_pull.outcome == 'success' }}
         with:
           image: ${{ env.IMAGE }}

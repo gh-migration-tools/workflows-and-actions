@@ -35,10 +35,10 @@ jobs:
           SOURCE_URL: ${{ github.server_url }}/${{ github.repository }}
         run: |
           docker build `
-            --file tests/docker/Dockerfile `
+            --file docker/Dockerfile `
             --tag "$env:IMAGE" `
             --label "org.opencontainers.image.source=$env:SOURCE_URL" `
-            tests/docker
+            docker
 
       - name: Push image
         run: docker push "$env:IMAGE"

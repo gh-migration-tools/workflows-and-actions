@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Build
-        uses: $/tests/actions/dynamic-action
+        uses: $/.github/actions/tests/impl/dynamic-action
         with:
           pre-build-steps: |
             - name: Run pre-build step 1

@@ -4,8 +4,8 @@ GitHub Actions **do not** support the creation of dynamic workflows and actions 
 
 To get around this limitation use the `dynamic-action-steps` action.
 
-- [Documentation](../docs/actions/dynamic-action-steps.md)
-- [Source](../.github/actions/dynamic-action-steps/action.yml)
+- [Documentation](../docs/actions/common/dynamic-action-steps.md)
+- [Source](../.github/actions/common/dynamic-action-steps/action.yml)
 
 ## Example workflow
 
@@ -36,7 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Pre-build steps
-        uses: $/.github/actions/dynamic-action-steps
+        uses: $/.github/actions/common/dynamic-action-steps
         if: ${{ inputs.pre-build-steps != '' }}
         with:
           steps: ${{ inputs.pre-build-steps }}
@@ -45,7 +45,7 @@ jobs:
         run: ...
 
       - name: Post-build steps
-        uses: $/.github/actions/dynamic-action-steps
+        uses: $/.github/actions/common/dynamic-action-steps
         if: ${{ inputs.post-build-steps != '' }}
         with:
           steps: ${{ inputs.post-build-steps }}
@@ -106,7 +106,7 @@ runs:
   using: composite
   steps:
     - name: Pre-build steps
-      uses: $/.github/actions/dynamic-action-steps
+      uses: $/.github/actions/common/dynamic-action-steps
       if: ${{ inputs.pre-build-steps != '' }}
       with:
         steps: ${{ inputs.pre-build-steps }}
@@ -116,7 +116,7 @@ runs:
       run: ...
 
     - name: Post-build steps
-      uses: $/.github/actions/dynamic-action-steps
+      uses: $/.github/actions/common/dynamic-action-steps
       if: ${{ inputs.post-build-steps != '' }}
       with:
         steps: ${{ inputs.post-build-steps }}

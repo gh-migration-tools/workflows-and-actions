@@ -2,8 +2,8 @@
 
 Use the `create-action` action to create an action at runtime.
 
- - [Documentation](../docs/actions/create-action.md)
- - [Source](../.github/actions/create-action/action.yml)
+ - [Documentation](../docs/actions/common/create-action.md)
+ - [Source](../.github/actions/common/create-action/action.yml)
 
 ## Examples
 
@@ -23,7 +23,7 @@ Create and run an action at runtime with static data.
 ```yaml
 steps:
   - name: Create action
-    uses: $/.github/actions/create-action
+    uses: $/.github/actions/common/create-action
     with:
       name: __dynamically-created-action
       content: |
@@ -76,14 +76,14 @@ steps:
     uses: $/.github/actions/load-action-data
 
   - name: Create action
-    uses: $/.github/actions/create-action
+    uses: $/.github/actions/common/create-action
     with:
       name: ${{ steps.load_action_data.outputs.name }}
       content: ${{ steps.load_action_data.outputs.content }}
 
   - name: Run action
     id: run
-    uses: $/.github/actions/dynamic-action
+    uses: $/.github/actions/common/dynamic-action
     with:
       uses: ./${{ steps.load_action_data.outputs.name }}
       with: ${{ steps.load_action_data.outputs.inputs }}
