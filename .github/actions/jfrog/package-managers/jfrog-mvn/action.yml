@@ -1,0 +1,210 @@
+name: jfrog-mvn
+description: 'Run Maven build.'
+
+inputs:
+  goals-and-options:
+    description: 'Goals and options to run with `mvn` command. For example `-f path/to/pom.xml`.'
+    required: true
+    default: ''
+  build-name:
+    description: 'Providing this option will collect and record build info for this build name. Build number option is mandatory when this option is provided.'
+    required: false
+    default: ''
+  build-number:
+    description: 'Providing this option will collect and record build info for this build number. Build name option is mandatory when this option is provided.'
+    required: false
+    default: ''
+  detailed-summary:
+    description: 'Set to `true` to include a list of the affected files in the command summary.'
+    required: false
+    default: 'false'
+  format:
+    description: 'Defines the output format of the command. Acceptable values are: `table`, `json`, `simple-json` and `sarif`. Note: the `json` format doesn''t include information about scans that are included as part of the Advanced Security package.'
+    required: false
+    default: ''
+  insecure-tls:
+    description: 'Set to `true` to skip TLS certificates verification.'
+    required: false
+    default: 'false'
+  project:
+    description: 'JFrog Artifactory project key.'
+    required: false
+    default: ''
+  scan:
+    description: 'Set if you''d like all files to be scanned by Xray on the local file system prior to the upload, and skip the upload if any of the files are found vulnerable.'
+    required: false
+    default: 'false'
+  server-id:
+    description: 'Server ID configured using the `jf config` command. Used in native mode (`JFROG_RUN_NATIVE=true`) for build info operations (artifact tagging, virtual-repo resolution). Has no effect in legacy (`config-file`) mode.'
+    required: false
+    default: ''
+  threads:
+    description: 'Number of threads for uploading build artifacts.'
+    required: false
+    default: ''
+  shell:
+    description: 'Shell to use for run steps. Acceptable values are: `bash`, `powershell`, `pwsh`.'
+    required: false
+    default: 'bash'
+  is-test:
+    description: 'Indicates if the action is tested.'
+    required: false
+    default: 'false'
+
+outputs:
+  command:
+    description: The JFrog command
+    value: ${{ steps.run_bash.outputs.command || steps.run_pwsh.outputs.command }}
+
+runs:
+  using: composite
+  steps:
+    - name: Run JFrog CLI command
+      id: run_bash
+      if: ${{ inputs.shell == 'bash' }}
+      shell: bash
+      env:
+        GOALS_AND_OPTIONS: ${{ inputs.goals-and-options }}
+        BUILD_NAME: ${{ inputs.build-name }}
+        BUILD_NUMBER: ${{ inputs.build-number }}
+        DETAILED_SUMMARY: ${{ inputs.detailed-summary }}
+        FORMAT: ${{ inputs.format }}
+        INSECURE_TLS: ${{ inputs.insecure-tls }}
+        PROJECT: ${{ inputs.project }}
+        SCAN: ${{ inputs.scan }}
+        SERVER_ID: ${{ inputs.server-id }}
+        THREADS: ${{ inputs.threads }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        arguments=(
+          'mvn'
+        )
+
+        if [[ -n "$GOALS_AND_OPTIONS" ]]; then
+          read -r -a split_args <<< "$GOALS_AND_OPTIONS"
+          arguments+=("${split_args[@]}")
+        fi
+
+        if [[ -n "$BUILD_NAME" ]]; then
+          arguments+=("--build-name=$BUILD_NAME")
+        fi
+
+        if [[ -n "$BUILD_NUMBER" ]]; then
+          arguments+=("--build-number=$BUILD_NUMBER")
+        fi
+
+        if [[ "$DETAILED_SUMMARY" == 'true' ]]; then
+          arguments+=('--detailed-summary')
+        fi
+
+        if [[ -n "$FORMAT" ]]; then
+          arguments+=("--format=$FORMAT")
+        fi
+
+        if [[ "$INSECURE_TLS" == 'true' ]]; then
+          arguments+=('--insecure-tls')
+        fi
+
+        if [[ -n "$PROJECT" ]]; then
+          arguments+=("--project=$PROJECT")
+        fi
+
+        if [[ "$SCAN" == 'true' ]]; then
+          arguments+=('--scan')
+        fi
+
+        if [[ -n "$SERVER_ID" ]]; then
+          arguments+=("--server-id=$SERVER_ID")
+        fi
+
+        if [[ -n "$THREADS" ]]; then
+          arguments+=("--threads=$THREADS")
+        fi
+
+        command='jf'
+        for argument in "${arguments[@]}"; do
+          printf -v escaped '%q' "$argument"
+          command+=" $escaped"
+        done
+
+        echo "Executing JFrog CLI Command:"
+        echo "$command"
+        echo "command=$command" >> "$GITHUB_OUTPUT"
+
+        if [[ "$IS_TEST" == 'false' ]]; then
+          jf "${arguments[@]}"
+        fi
+
+    - name: Run JFrog CLI command
+      id: run_pwsh
+      if: ${{ inputs.shell == 'powershell' || inputs.shell == 'pwsh' }}
+      shell: ${{ inputs.shell }}
+      env:
+        GOALS_AND_OPTIONS: ${{ inputs.goals-and-options }}
+        BUILD_NAME: ${{ inputs.build-name }}
+        BUILD_NUMBER: ${{ inputs.build-number }}
+        DETAILED_SUMMARY: ${{ inputs.detailed-summary }}
+        FORMAT: ${{ inputs.format }}
+        INSECURE_TLS: ${{ inputs.insecure-tls }}
+        PROJECT: ${{ inputs.project }}
+        SCAN: ${{ inputs.scan }}
+        SERVER_ID: ${{ inputs.server-id }}
+        THREADS: ${{ inputs.threads }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        $arguments = @(
+          'mvn'
+        )
+
+        if (-not [string]::IsNullOrWhiteSpace($env:GOALS_AND_OPTIONS)) {
+          $arguments += $env:GOALS_AND_OPTIONS -split '\s+' | Where-Object { $_ }
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:BUILD_NAME)) {
+          $arguments += "--build-name=$env:BUILD_NAME"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:BUILD_NUMBER)) {
+          $arguments += "--build-number=$env:BUILD_NUMBER"
+        }
+
+        if ($env:DETAILED_SUMMARY -eq 'true') {
+          $arguments += '--detailed-summary'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:FORMAT)) {
+          $arguments += "--format=$env:FORMAT"
+        }
+
+        if ($env:INSECURE_TLS -eq 'true') {
+          $arguments += '--insecure-tls'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:PROJECT)) {
+          $arguments += "--project=$env:PROJECT"
+        }
+
+        if ($env:SCAN -eq 'true') {
+          $arguments += '--scan'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SERVER_ID)) {
+          $arguments += "--server-id=$env:SERVER_ID"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:THREADS)) {
+          $arguments += "--threads=$env:THREADS"
+        }
+
+        $command = "jf $($arguments -join ' ')"
+        $delimiter = [guid]::NewGuid().ToString()
+
+        @(
+          "command<<$delimiter"
+          $command
+          $delimiter
+        ) >> $env:GITHUB_OUTPUT
+
+        if ($env:IS_TEST -eq 'false') {
+          & jf @arguments
+        }

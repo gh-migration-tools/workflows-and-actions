@@ -1,0 +1,121 @@
+name: jfrog-rt-transfer-plugin-install
+description: 'Download and install the data-transfer user plugin on the primary node of Artifactory, which is running on this local machine.'
+
+inputs:
+  server-id:
+    description: 'The ID of the source server, on which the plugin should be installed.'
+    required: true
+    default: ''
+  dir:
+    description: 'The local directory that contains the plugin files to install.'
+    required: false
+    default: ''
+  home-dir:
+    description: 'The local JFrog home directory to install the plugin in.'
+    required: false
+    default: ''
+  version:
+    description: 'The plugin version to download and install.'
+    required: false
+    default: ''
+  shell:
+    description: 'Shell to use for run steps. Acceptable values are: `bash`, `powershell`, `pwsh`.'
+    required: false
+    default: 'bash'
+  is-test:
+    description: 'Indicates if the action is tested.'
+    required: false
+    default: 'false'
+
+outputs:
+  command:
+    description: The JFrog command
+    value: ${{ steps.run_bash.outputs.command || steps.run_pwsh.outputs.command }}
+
+runs:
+  using: composite
+  steps:
+    - name: Run JFrog CLI command
+      id: run_bash
+      if: ${{ inputs.shell == 'bash' }}
+      shell: bash
+      env:
+        SERVER_ID: ${{ inputs.server-id }}
+        DIR: ${{ inputs.dir }}
+        HOME_DIR: ${{ inputs.home-dir }}
+        VERSION: ${{ inputs.version }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        arguments=(
+          'rt'
+          'transfer-plugin-install'
+          "$SERVER_ID"
+        )
+
+        if [[ -n "$DIR" ]]; then
+          arguments+=("--dir=$DIR")
+        fi
+
+        if [[ -n "$HOME_DIR" ]]; then
+          arguments+=("--home-dir=$HOME_DIR")
+        fi
+
+        if [[ -n "$VERSION" ]]; then
+          arguments+=("--version=$VERSION")
+        fi
+
+        command='jf'
+        for argument in "${arguments[@]}"; do
+          printf -v escaped '%q' "$argument"
+          command+=" $escaped"
+        done
+
+        echo "Executing JFrog CLI Command:"
+        echo "$command"
+        echo "command=$command" >> "$GITHUB_OUTPUT"
+
+        if [[ "$IS_TEST" == 'false' ]]; then
+          jf "${arguments[@]}"
+        fi
+
+    - name: Run JFrog CLI command
+      id: run_pwsh
+      if: ${{ inputs.shell == 'powershell' || inputs.shell == 'pwsh' }}
+      shell: ${{ inputs.shell }}
+      env:
+        SERVER_ID: ${{ inputs.server-id }}
+        DIR: ${{ inputs.dir }}
+        HOME_DIR: ${{ inputs.home-dir }}
+        VERSION: ${{ inputs.version }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        $arguments = @(
+          'rt'
+          'transfer-plugin-install'
+          "$env:SERVER_ID"
+        )
+
+        if (-not [string]::IsNullOrWhiteSpace($env:DIR)) {
+          $arguments += "--dir=$env:DIR"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:HOME_DIR)) {
+          $arguments += "--home-dir=$env:HOME_DIR"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:VERSION)) {
+          $arguments += "--version=$env:VERSION"
+        }
+
+        $command = "jf $($arguments -join ' ')"
+        $delimiter = [guid]::NewGuid().ToString()
+
+        @(
+          "command<<$delimiter"
+          $command
+          $delimiter
+        ) >> $env:GITHUB_OUTPUT
+
+        if ($env:IS_TEST -eq 'false') {
+          & jf @arguments
+        }

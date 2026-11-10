@@ -1,0 +1,263 @@
+name: jfrog-rt-docker-promote
+description: 'Promotes a Docker image from one repository to another. Supported by local repositories only.'
+
+inputs:
+  source-docker-image:
+    description: 'The docker image name to promote.'
+    required: true
+    default: ''
+  source-repo:
+    description: 'Source repository in Artifactory.'
+    required: true
+    default: ''
+  target-repo:
+    description: 'Target repository in Artifactory.'
+    required: true
+    default: ''
+  format:
+    description: 'Defines the output format of the command. Acceptable values are: `json`.'
+    required: false
+    default: ''
+  access-token:
+    description: 'JFrog access token.'
+    required: false
+    default: ''
+  copy:
+    description: 'If set `true`, the Docker image is copied to the target repository, otherwise it is moved.'
+    required: false
+    default: 'false'
+  password:
+    description: 'JFrog password.'
+    required: false
+    default: ''
+  server-id:
+    description: 'Server ID configured using the `jf config` command.'
+    required: false
+    default: ''
+  source-tag:
+    description: 'The tag name to promote.'
+    required: false
+    default: ''
+  ssh-key-path:
+    description: 'SSH key file path.'
+    required: false
+    default: ''
+  ssh-passphrase:
+    description: 'SSH key passphrase.'
+    required: false
+    default: ''
+  target-docker-image:
+    description: 'Docker target image name.'
+    required: false
+    default: ''
+  target-tag:
+    description: 'The target tag to assign the image after promotion.'
+    required: false
+    default: ''
+  url:
+    description: 'JFrog Platform URL. (example: `https://acme.jfrog.io`)'
+    required: false
+    default: ''
+  user:
+    description: 'JFrog username.'
+    required: false
+    default: ''
+  shell:
+    description: 'Shell to use for run steps. Acceptable values are: `bash`, `powershell`, `pwsh`.'
+    required: false
+    default: 'bash'
+  is-test:
+    description: 'Indicates if the action is tested.'
+    required: false
+    default: 'false'
+
+outputs:
+  command:
+    description: The JFrog command
+    value: ${{ steps.run_bash.outputs.command || steps.run_pwsh.outputs.command }}
+
+runs:
+  using: composite
+  steps:
+    - name: Run JFrog CLI command
+      id: run_bash
+      if: ${{ inputs.shell == 'bash' }}
+      shell: bash
+      env:
+        SOURCE_DOCKER_IMAGE: ${{ inputs.source-docker-image }}
+        SOURCE_REPO: ${{ inputs.source-repo }}
+        TARGET_REPO: ${{ inputs.target-repo }}
+        FORMAT: ${{ inputs.format }}
+        ACCESS_TOKEN: ${{ inputs.access-token }}
+        COPY: ${{ inputs.copy }}
+        PASSWORD: ${{ inputs.password }}
+        SERVER_ID: ${{ inputs.server-id }}
+        SOURCE_TAG: ${{ inputs.source-tag }}
+        SSH_KEY_PATH: ${{ inputs.ssh-key-path }}
+        SSH_PASSPHRASE: ${{ inputs.ssh-passphrase }}
+        TARGET_DOCKER_IMAGE: ${{ inputs.target-docker-image }}
+        TARGET_TAG: ${{ inputs.target-tag }}
+        URL: ${{ inputs.url }}
+        USER: ${{ inputs.user }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        arguments=(
+          'rt'
+          'docker-promote'
+          "$SOURCE_DOCKER_IMAGE"
+          "$SOURCE_REPO"
+          "$TARGET_REPO"
+        )
+
+        if [[ -n "$FORMAT" ]]; then
+          arguments+=("--format=$FORMAT")
+        fi
+
+        if [[ -n "$ACCESS_TOKEN" ]]; then
+          arguments+=("--access-token=$ACCESS_TOKEN")
+        fi
+
+        if [[ "$COPY" == 'true' ]]; then
+          arguments+=('--copy')
+        fi
+
+        if [[ -n "$PASSWORD" ]]; then
+          arguments+=("--password=$PASSWORD")
+        fi
+
+        if [[ -n "$SERVER_ID" ]]; then
+          arguments+=("--server-id=$SERVER_ID")
+        fi
+
+        if [[ -n "$SOURCE_TAG" ]]; then
+          arguments+=("--source-tag=$SOURCE_TAG")
+        fi
+
+        if [[ -n "$SSH_KEY_PATH" ]]; then
+          arguments+=("--ssh-key-path=$SSH_KEY_PATH")
+        fi
+
+        if [[ -n "$SSH_PASSPHRASE" ]]; then
+          arguments+=("--ssh-passphrase=$SSH_PASSPHRASE")
+        fi
+
+        if [[ -n "$TARGET_DOCKER_IMAGE" ]]; then
+          arguments+=("--target-docker-image=$TARGET_DOCKER_IMAGE")
+        fi
+
+        if [[ -n "$TARGET_TAG" ]]; then
+          arguments+=("--target-tag=$TARGET_TAG")
+        fi
+
+        if [[ -n "$URL" ]]; then
+          arguments+=("--url=$URL")
+        fi
+
+        if [[ -n "$USER" ]]; then
+          arguments+=("--user=$USER")
+        fi
+
+        command='jf'
+        for argument in "${arguments[@]}"; do
+          printf -v escaped '%q' "$argument"
+          command+=" $escaped"
+        done
+
+        echo "Executing JFrog CLI Command:"
+        echo "$command"
+        echo "command=$command" >> "$GITHUB_OUTPUT"
+
+        if [[ "$IS_TEST" == 'false' ]]; then
+          jf "${arguments[@]}"
+        fi
+
+    - name: Run JFrog CLI command
+      id: run_pwsh
+      if: ${{ inputs.shell == 'powershell' || inputs.shell == 'pwsh' }}
+      shell: ${{ inputs.shell }}
+      env:
+        SOURCE_DOCKER_IMAGE: ${{ inputs.source-docker-image }}
+        SOURCE_REPO: ${{ inputs.source-repo }}
+        TARGET_REPO: ${{ inputs.target-repo }}
+        FORMAT: ${{ inputs.format }}
+        ACCESS_TOKEN: ${{ inputs.access-token }}
+        COPY: ${{ inputs.copy }}
+        PASSWORD: ${{ inputs.password }}
+        SERVER_ID: ${{ inputs.server-id }}
+        SOURCE_TAG: ${{ inputs.source-tag }}
+        SSH_KEY_PATH: ${{ inputs.ssh-key-path }}
+        SSH_PASSPHRASE: ${{ inputs.ssh-passphrase }}
+        TARGET_DOCKER_IMAGE: ${{ inputs.target-docker-image }}
+        TARGET_TAG: ${{ inputs.target-tag }}
+        URL: ${{ inputs.url }}
+        USER: ${{ inputs.user }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        $arguments = @(
+          'rt'
+          'docker-promote'
+          "$env:SOURCE_DOCKER_IMAGE"
+          "$env:SOURCE_REPO"
+          "$env:TARGET_REPO"
+        )
+
+        if (-not [string]::IsNullOrWhiteSpace($env:FORMAT)) {
+          $arguments += "--format=$env:FORMAT"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:ACCESS_TOKEN)) {
+          $arguments += "--access-token=$env:ACCESS_TOKEN"
+        }
+
+        if ($env:COPY -eq 'true') {
+          $arguments += '--copy'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:PASSWORD)) {
+          $arguments += "--password=$env:PASSWORD"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SERVER_ID)) {
+          $arguments += "--server-id=$env:SERVER_ID"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SOURCE_TAG)) {
+          $arguments += "--source-tag=$env:SOURCE_TAG"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SSH_KEY_PATH)) {
+          $arguments += "--ssh-key-path=$env:SSH_KEY_PATH"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SSH_PASSPHRASE)) {
+          $arguments += "--ssh-passphrase=$env:SSH_PASSPHRASE"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:TARGET_DOCKER_IMAGE)) {
+          $arguments += "--target-docker-image=$env:TARGET_DOCKER_IMAGE"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:TARGET_TAG)) {
+          $arguments += "--target-tag=$env:TARGET_TAG"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:URL)) {
+          $arguments += "--url=$env:URL"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:USER)) {
+          $arguments += "--user=$env:USER"
+        }
+
+        $command = "jf $($arguments -join ' ')"
+        $delimiter = [guid]::NewGuid().ToString()
+
+        @(
+          "command<<$delimiter"
+          $command
+          $delimiter
+        ) >> $env:GITHUB_OUTPUT
+
+        if ($env:IS_TEST -eq 'false') {
+          & jf @arguments
+        }

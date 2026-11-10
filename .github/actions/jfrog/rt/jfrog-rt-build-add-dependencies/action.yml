@@ -1,0 +1,280 @@
+name: jfrog-rt-build-add-dependencies
+description: 'Adds dependencies from the local file-system to the build info.'
+
+inputs:
+  build-name:
+    description: 'Build name.'
+    required: true
+    default: ''
+  build-number:
+    description: 'Build number.'
+    required: true
+    default: ''
+  pattern:
+    description: 'Without the `--from-rt` option, this argument specifies the local file system.'
+    required: true
+    default: ''
+  format:
+    description: 'Defines the output format of the command. Acceptable values are: `json`, `table`.'
+    required: false
+    default: ''
+  dry-run:
+    description: 'Set to `true` to only get a summary of the dependencies that will be added to the build info.'
+    required: false
+    default: 'false'
+  exclusions:
+    description: 'List of semicolon-separated (`;`) exclude patterns. Exclude patterns may contain the `*` and the `?` wildcards or a regex pattern, according to the value of the `regexp` option.'
+    required: false
+    default: ''
+  from-rt:
+    description: 'Set `true` to search the files in Artifactory, rather than on the local file system. The `--regexp` option is not supported when `--from-rt` is set to `true`.'
+    required: false
+    default: 'false'
+  module:
+    description: 'Optional module name in the build info for adding the dependency.'
+    required: false
+    default: ''
+  project:
+    description: 'JFrog Artifactory project key.'
+    required: false
+    default: ''
+  recursive:
+    description: 'Set to `false` if you do not wish to collect artifacts in sub-folders to be added to the build info.'
+    required: false
+    default: 'false'
+  regexp:
+    description: 'Set to `true` to use a regular expression instead of wildcards expression to collect files to be added to the build info.'
+    required: false
+    default: 'false'
+  server-id:
+    description: 'Server ID configured using the `jf config` command.'
+    required: false
+    default: ''
+  spec:
+    description: 'Path to a File Spec.'
+    required: false
+    default: ''
+  spec-json:
+    description: 'Spec as JSON.'
+    required: false
+    default: ''
+  spec-vars:
+    description: 'List of semicolon-separated (`;`) variables in the form of `key1=value1;key2=value2;...` (wrapped by quotes) to be replaced in the File Spec. In the File Spec, the variables should be used as follows: `${key1}`.'
+    required: false
+    default: ''
+  shell:
+    description: 'Shell to use for run steps. Acceptable values are: `bash`, `powershell`, `pwsh`.'
+    required: false
+    default: 'bash'
+  is-test:
+    description: 'Indicates if the action is tested.'
+    required: false
+    default: 'false'
+
+outputs:
+  command:
+    description: The JFrog command
+    value: ${{ steps.run_bash.outputs.command || steps.run_pwsh.outputs.command }}
+
+runs:
+  using: composite
+  steps:
+    - name: Run JFrog CLI command
+      id: run_bash
+      if: ${{ inputs.shell == 'bash' }}
+      shell: bash
+      env:
+        BUILD_NAME: ${{ inputs.build-name }}
+        BUILD_NUMBER: ${{ inputs.build-number }}
+        PATTERN: ${{ inputs.pattern }}
+        FORMAT: ${{ inputs.format }}
+        DRY_RUN: ${{ inputs.dry-run }}
+        EXCLUSIONS: ${{ inputs.exclusions }}
+        FROM_RT: ${{ inputs.from-rt }}
+        MODULE: ${{ inputs.module }}
+        PROJECT: ${{ inputs.project }}
+        RECURSIVE: ${{ inputs.recursive }}
+        REGEXP: ${{ inputs.regexp }}
+        SERVER_ID: ${{ inputs.server-id }}
+        SPEC: ${{ inputs.spec }}
+        SPEC_JSON: ${{ inputs.spec-json }}
+        SPEC_VARS: ${{ inputs.spec-vars }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        arguments=(
+          'rt'
+          'build-add-dependencies'
+          "$BUILD_NAME"
+          "$BUILD_NUMBER"
+          "$PATTERN"
+        )
+
+        if [[ -n "$FORMAT" ]]; then
+          arguments+=("--format=$FORMAT")
+        fi
+
+        if [[ "$DRY_RUN" == 'true' ]]; then
+          arguments+=('--dry-run')
+        fi
+
+        if [[ -n "$EXCLUSIONS" ]]; then
+          arguments+=("--exclusions=$EXCLUSIONS")
+        fi
+
+        if [[ "$FROM_RT" == 'true' ]]; then
+          arguments+=('--from-rt')
+        fi
+
+        if [[ -n "$MODULE" ]]; then
+          arguments+=("--module=$MODULE")
+        fi
+
+        if [[ -n "$PROJECT" ]]; then
+          arguments+=("--project=$PROJECT")
+        fi
+
+        if [[ "$RECURSIVE" == 'true' ]]; then
+          arguments+=('--recursive')
+        fi
+
+        if [[ "$REGEXP" == 'true' ]]; then
+          arguments+=('--regexp')
+        fi
+
+        if [[ -n "$SERVER_ID" ]]; then
+          arguments+=("--server-id=$SERVER_ID")
+        fi
+
+        if [[ -n "$SPEC" ]]; then
+          arguments+=("--spec=$SPEC")
+        elif [[ -n "$SPEC_JSON" ]]; then
+          specFileName="spec.json"
+
+          echo "Writing $specFileName file with the content"
+          echo
+          printf '%s\n' "$SPEC_JSON"
+          echo
+
+          printf '%s' "$SPEC_JSON" > "$specFileName"
+          arguments+=("--spec=$specFileName")
+        fi
+
+        if [[ -n "$SPEC_VARS" ]]; then
+          arguments+=("--spec-vars=$SPEC_VARS")
+        fi
+
+        command='jf'
+        for argument in "${arguments[@]}"; do
+          printf -v escaped '%q' "$argument"
+          command+=" $escaped"
+        done
+
+        echo "Executing JFrog CLI Command:"
+        echo "$command"
+        echo "command=$command" >> "$GITHUB_OUTPUT"
+
+        if [[ "$IS_TEST" == 'false' ]]; then
+          jf "${arguments[@]}"
+        fi
+
+    - name: Run JFrog CLI command
+      id: run_pwsh
+      if: ${{ inputs.shell == 'powershell' || inputs.shell == 'pwsh' }}
+      shell: ${{ inputs.shell }}
+      env:
+        BUILD_NAME: ${{ inputs.build-name }}
+        BUILD_NUMBER: ${{ inputs.build-number }}
+        PATTERN: ${{ inputs.pattern }}
+        FORMAT: ${{ inputs.format }}
+        DRY_RUN: ${{ inputs.dry-run }}
+        EXCLUSIONS: ${{ inputs.exclusions }}
+        FROM_RT: ${{ inputs.from-rt }}
+        MODULE: ${{ inputs.module }}
+        PROJECT: ${{ inputs.project }}
+        RECURSIVE: ${{ inputs.recursive }}
+        REGEXP: ${{ inputs.regexp }}
+        SERVER_ID: ${{ inputs.server-id }}
+        SPEC: ${{ inputs.spec }}
+        SPEC_JSON: ${{ inputs.spec-json }}
+        SPEC_VARS: ${{ inputs.spec-vars }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        $arguments = @(
+          'rt'
+          'build-add-dependencies'
+          "$env:BUILD_NAME"
+          "$env:BUILD_NUMBER"
+          "$env:PATTERN"
+        )
+
+        if (-not [string]::IsNullOrWhiteSpace($env:FORMAT)) {
+          $arguments += "--format=$env:FORMAT"
+        }
+
+        if ($env:DRY_RUN -eq 'true') {
+          $arguments += '--dry-run'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:EXCLUSIONS)) {
+          $arguments += "--exclusions=$env:EXCLUSIONS"
+        }
+
+        if ($env:FROM_RT -eq 'true') {
+          $arguments += '--from-rt'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:MODULE)) {
+          $arguments += "--module=$env:MODULE"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:PROJECT)) {
+          $arguments += "--project=$env:PROJECT"
+        }
+
+        if ($env:RECURSIVE -eq 'true') {
+          $arguments += '--recursive'
+        }
+
+        if ($env:REGEXP -eq 'true') {
+          $arguments += '--regexp'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SERVER_ID)) {
+          $arguments += "--server-id=$env:SERVER_ID"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SPEC)) {
+          $arguments += "--spec=$env:SPEC"
+        }
+        elseif (-not [string]::IsNullOrWhiteSpace($env:SPEC_JSON)) {
+          $specFileName = "spec.json"
+
+          Write-Host "Writing $specFileName file with the content"
+          Write-Host ""
+          Write-Host $env:SPEC_JSON
+          Write-Host ""
+
+          [System.IO.File]::WriteAllText(
+            $specFileName,
+            $env:SPEC_JSON,
+            [System.Text.UTF8Encoding]::new($false))
+
+          $arguments += "--spec=$specFileName"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SPEC_VARS)) {
+          $arguments += "--spec-vars=$env:SPEC_VARS"
+        }
+
+        $command = "jf $($arguments -join ' ')"
+        $delimiter = [guid]::NewGuid().ToString()
+
+        @(
+          "command<<$delimiter"
+          $command
+          $delimiter
+        ) >> $env:GITHUB_OUTPUT
+
+        if ($env:IS_TEST -eq 'false') {
+          & jf @arguments
+        }

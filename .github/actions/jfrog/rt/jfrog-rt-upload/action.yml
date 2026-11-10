@@ -1,0 +1,664 @@
+name: jfrog-rt-upload
+description: 'Upload files from local file system to Artifactory.'
+
+inputs:
+  source-pattern:
+    description: 'Specifies the local file system path to artifacts which should be uploaded to Artifactory.'
+    required: true
+    default: ''
+  target-pattern:
+    description: 'Specifies the target path in Artifactory in the following format: `<repository name>/<repository path>`.'
+    required: true
+    default: ''
+  format:
+    description: 'Defines the output format of the command. Acceptable values are: `json`, `table`.'
+    required: false
+    default: ''
+  access-token:
+    description: 'JFrog access token.'
+    required: false
+    default: ''
+  ant:
+    description: 'Set to `true` to use an ant pattern instead of wildcards expression to collect files to upload.'
+    required: false
+    default: 'false'
+  archive:
+    description: 'Set to `zip` to pack and deploy the files to Artifactory inside a ZIP archive. Currently, the only packaging format supported is `zip`.'
+    required: false
+    default: ''
+  build-name:
+    description: 'Providing this option will collect and record build info for this build name. Build number option is mandatory when this option is provided.'
+    required: false
+    default: ''
+  build-number:
+    description: 'Providing this option will collect and record build info for this build number. Build name option is mandatory when this option is provided.'
+    required: false
+    default: ''
+  chunk-size:
+    description: 'The upload chunk size in MiB that can be concurrently uploaded during a multi-part upload. This option, as well as the functionality of multi-part upload, requires Artifactory with S3 or GCP storage.'
+    required: false
+    default: ''
+  client-cert-key-path:
+    description: 'Private key file for the client certificate in PEM format.'
+    required: false
+    default: ''
+  client-cert-path:
+    description: 'Client certificate file in PEM format.'
+    required: false
+    default: ''
+  deb:
+    description: 'Used for Debian packages in the form of distribution/component/architecture. If the value for distribution, component or architecture includes a slash, the slash should be escaped with a back-slash.'
+    required: false
+    default: ''
+  detailed-summary:
+    description: 'Set to `true` to include a list of the affected files in the command summary.'
+    required: false
+    default: 'false'
+  dry-run:
+    description: 'Set to `true` to disable communication with Artifactory.'
+    required: false
+    default: 'false'
+  exclusions:
+    description: 'List of semicolon-separated (`;`) exclude patterns. Exclude patterns may contain the `*` and the `?` wildcards or a regex pattern, according to the value of the `regexp` option.'
+    required: false
+    default: ''
+  explode:
+    description: 'Set to `true` to extract an archive after it is deployed to Artifactory.'
+    required: false
+    default: 'false'
+  fail-no-op:
+    description: 'Set to `true` if you''d like the command to return exit code 2 in case of no files are affected.'
+    required: false
+    default: 'false'
+  flat:
+    description: 'If set to `false`, files are uploaded according to their file system hierarchy.'
+    required: false
+    default: 'false'
+  include-dirs:
+    description: 'Set to `true` if you''d like to also apply the source path pattern for directories and not just for files.'
+    required: false
+    default: 'false'
+  insecure-tls:
+    description: 'Set to `true` to skip TLS certificates verification.'
+    required: false
+    default: 'false'
+  min-split:
+    description: 'The minimum file size in MiB required to attempt a multi-part upload. This option, as well as the functionality of multi-part upload, requires Artifactory with S3 or GCP storage.'
+    required: false
+    default: ''
+  module:
+    description: 'Optional module name for the build info. Build name and number options are mandatory when this option is provided.'
+    required: false
+    default: ''
+  password:
+    description: 'JFrog password.'
+    required: false
+    default: ''
+  project:
+    description: 'JFrog Artifactory project key.'
+    required: false
+    default: ''
+  quiet:
+    description: 'Set to `true` to skip the sync-deletes confirmation message.'
+    required: false
+    default: 'false'
+  recursive:
+    description: 'Set to `false` if you do not wish to collect artifacts in sub-folders to be uploaded to Artifactory.'
+    required: false
+    default: 'false'
+  regexp:
+    description: 'Set to `true` to use a regular expression instead of wildcards expression to collect files to upload.'
+    required: false
+    default: 'false'
+  retries:
+    description: 'Number of HTTP retries.'
+    required: false
+    default: ''
+  retry-wait-time:
+    description: 'Number of seconds or milliseconds to wait between retries. The numeric value should either end with s for seconds or ms for milliseconds (for example: `10s` or `100ms`).'
+    required: false
+    default: ''
+  server-id:
+    description: 'Server ID configured using the `jf config` command.'
+    required: false
+    default: ''
+  spec:
+    description: 'Path to a File Spec.'
+    required: false
+    default: ''
+  spec-json:
+    description: 'Spec as JSON.'
+    required: false
+    default: ''
+  spec-vars:
+    description: 'List of semicolon-separated (`;`) variables in the form of `key1=value1;key2=value2;...` (wrapped by quotes) to be replaced in the File Spec. In the File Spec, the variables should be used as follows: `${key1}`.'
+    required: false
+    default: ''
+  split-count:
+    description: 'The maximum number of parts that can be concurrently uploaded per file during a multi-part upload. Set to `0` to disable multi-part upload. This option, as well as the functionality of multi-part upload, requires Artifactory with S3 or GCP storage.'
+    required: false
+    default: ''
+  ssh-key-path:
+    description: 'SSH key file path.'
+    required: false
+    default: ''
+  ssh-passphrase:
+    description: 'SSH key passphrase.'
+    required: false
+    default: ''
+  symlinks:
+    description: 'Set to `true` to preserve symbolic links structure in Artifactory.'
+    required: false
+    default: 'false'
+  sync-deletes:
+    description: 'Specific path in Artifactory, under which to sync artifacts after the upload. After the upload, this path will include only the artifacts uploaded during this upload operation. The other files under this path will be deleted.'
+    required: false
+    default: ''
+  target-props:
+    description: 'List of semicolon-separated (`;`) variables in the form of `key1=value1;key2=value2;...` (wrapped by quotes) to be replaced in the File Spec. In the File Spec, the variables should be used as follows: `${key1}`.'
+    required: false
+    default: ''
+  threads:
+    description: 'Number of working threads.'
+    required: false
+    default: ''
+  url:
+    description: 'JFrog Platform URL. (example: `https://acme.jfrog.io`)'
+    required: false
+    default: ''
+  user:
+    description: 'JFrog username.'
+    required: false
+    default: ''
+  shell:
+    description: 'Shell to use for run steps. Acceptable values are: `bash`, `powershell`, `pwsh`.'
+    required: false
+    default: 'bash'
+  is-test:
+    description: 'Indicates if the action is tested.'
+    required: false
+    default: 'false'
+
+outputs:
+  command:
+    description: The JFrog command
+    value: ${{ steps.run_bash.outputs.command || steps.run_pwsh.outputs.command }}
+
+runs:
+  using: composite
+  steps:
+    - name: Run JFrog CLI command
+      id: run_bash
+      if: ${{ inputs.shell == 'bash' }}
+      shell: bash
+      env:
+        SOURCE_PATTERN: ${{ inputs.source-pattern }}
+        TARGET_PATTERN: ${{ inputs.target-pattern }}
+        FORMAT: ${{ inputs.format }}
+        ACCESS_TOKEN: ${{ inputs.access-token }}
+        ANT: ${{ inputs.ant }}
+        ARCHIVE: ${{ inputs.archive }}
+        BUILD_NAME: ${{ inputs.build-name }}
+        BUILD_NUMBER: ${{ inputs.build-number }}
+        CHUNK_SIZE: ${{ inputs.chunk-size }}
+        CLIENT_CERT_KEY_PATH: ${{ inputs.client-cert-key-path }}
+        CLIENT_CERT_PATH: ${{ inputs.client-cert-path }}
+        DEB: ${{ inputs.deb }}
+        DETAILED_SUMMARY: ${{ inputs.detailed-summary }}
+        DRY_RUN: ${{ inputs.dry-run }}
+        EXCLUSIONS: ${{ inputs.exclusions }}
+        EXPLODE: ${{ inputs.explode }}
+        FAIL_NO_OP: ${{ inputs.fail-no-op }}
+        FLAT: ${{ inputs.flat }}
+        INCLUDE_DIRS: ${{ inputs.include-dirs }}
+        INSECURE_TLS: ${{ inputs.insecure-tls }}
+        MIN_SPLIT: ${{ inputs.min-split }}
+        MODULE: ${{ inputs.module }}
+        PASSWORD: ${{ inputs.password }}
+        PROJECT: ${{ inputs.project }}
+        QUIET: ${{ inputs.quiet }}
+        RECURSIVE: ${{ inputs.recursive }}
+        REGEXP: ${{ inputs.regexp }}
+        RETRIES: ${{ inputs.retries }}
+        RETRY_WAIT_TIME: ${{ inputs.retry-wait-time }}
+        SERVER_ID: ${{ inputs.server-id }}
+        SPEC: ${{ inputs.spec }}
+        SPEC_JSON: ${{ inputs.spec-json }}
+        SPEC_VARS: ${{ inputs.spec-vars }}
+        SPLIT_COUNT: ${{ inputs.split-count }}
+        SSH_KEY_PATH: ${{ inputs.ssh-key-path }}
+        SSH_PASSPHRASE: ${{ inputs.ssh-passphrase }}
+        SYMLINKS: ${{ inputs.symlinks }}
+        SYNC_DELETES: ${{ inputs.sync-deletes }}
+        TARGET_PROPS: ${{ inputs.target-props }}
+        THREADS: ${{ inputs.threads }}
+        URL: ${{ inputs.url }}
+        USER: ${{ inputs.user }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        arguments=(
+          'rt'
+          'upload'
+          "$SOURCE_PATTERN"
+          "$TARGET_PATTERN"
+        )
+
+        if [[ -n "$FORMAT" ]]; then
+          arguments+=("--format=$FORMAT")
+        fi
+
+        if [[ -n "$ACCESS_TOKEN" ]]; then
+          arguments+=("--access-token=$ACCESS_TOKEN")
+        fi
+
+        if [[ "$ANT" == 'true' ]]; then
+          arguments+=('--ant')
+        fi
+
+        if [[ -n "$ARCHIVE" ]]; then
+          arguments+=("--archive=$ARCHIVE")
+        fi
+
+        if [[ -n "$BUILD_NAME" ]]; then
+          arguments+=("--build-name=$BUILD_NAME")
+        fi
+
+        if [[ -n "$BUILD_NUMBER" ]]; then
+          arguments+=("--build-number=$BUILD_NUMBER")
+        fi
+
+        if [[ -n "$CHUNK_SIZE" ]]; then
+          arguments+=("--chunk-size=$CHUNK_SIZE")
+        fi
+
+        if [[ -n "$CLIENT_CERT_KEY_PATH" ]]; then
+          arguments+=("--client-cert-key-path=$CLIENT_CERT_KEY_PATH")
+        fi
+
+        if [[ -n "$CLIENT_CERT_PATH" ]]; then
+          arguments+=("--client-cert-path=$CLIENT_CERT_PATH")
+        fi
+
+        if [[ -n "$DEB" ]]; then
+          arguments+=("--deb=$DEB")
+        fi
+
+        if [[ "$DETAILED_SUMMARY" == 'true' ]]; then
+          arguments+=('--detailed-summary')
+        fi
+
+        if [[ "$DRY_RUN" == 'true' ]]; then
+          arguments+=('--dry-run')
+        fi
+
+        if [[ -n "$EXCLUSIONS" ]]; then
+          arguments+=("--exclusions=$EXCLUSIONS")
+        fi
+
+        if [[ "$EXPLODE" == 'true' ]]; then
+          arguments+=('--explode')
+        fi
+
+        if [[ "$FAIL_NO_OP" == 'true' ]]; then
+          arguments+=('--fail-no-op')
+        fi
+
+        if [[ "$FLAT" == 'true' ]]; then
+          arguments+=('--flat')
+        fi
+
+        if [[ "$INCLUDE_DIRS" == 'true' ]]; then
+          arguments+=('--include-dirs')
+        fi
+
+        if [[ "$INSECURE_TLS" == 'true' ]]; then
+          arguments+=('--insecure-tls')
+        fi
+
+        if [[ -n "$MIN_SPLIT" ]]; then
+          arguments+=("--min-split=$MIN_SPLIT")
+        fi
+
+        if [[ -n "$MODULE" ]]; then
+          arguments+=("--module=$MODULE")
+        fi
+
+        if [[ -n "$PASSWORD" ]]; then
+          arguments+=("--password=$PASSWORD")
+        fi
+
+        if [[ -n "$PROJECT" ]]; then
+          arguments+=("--project=$PROJECT")
+        fi
+
+        if [[ "$QUIET" == 'true' ]]; then
+          arguments+=('--quiet')
+        fi
+
+        if [[ "$RECURSIVE" == 'true' ]]; then
+          arguments+=('--recursive')
+        fi
+
+        if [[ "$REGEXP" == 'true' ]]; then
+          arguments+=('--regexp')
+        fi
+
+        if [[ -n "$RETRIES" ]]; then
+          arguments+=("--retries=$RETRIES")
+        fi
+
+        if [[ -n "$RETRY_WAIT_TIME" ]]; then
+          arguments+=("--retry-wait-time=$RETRY_WAIT_TIME")
+        fi
+
+        if [[ -n "$SERVER_ID" ]]; then
+          arguments+=("--server-id=$SERVER_ID")
+        fi
+
+        if [[ -n "$SPEC" ]]; then
+          arguments+=("--spec=$SPEC")
+        elif [[ -n "$SPEC_JSON" ]]; then
+          specFileName="spec.json"
+
+          echo "Writing $specFileName file with the content"
+          echo
+          printf '%s\n' "$SPEC_JSON"
+          echo
+
+          printf '%s' "$SPEC_JSON" > "$specFileName"
+          arguments+=("--spec=$specFileName")
+        fi
+
+        if [[ -n "$SPEC_VARS" ]]; then
+          arguments+=("--spec-vars=$SPEC_VARS")
+        fi
+
+        if [[ -n "$SPLIT_COUNT" ]]; then
+          arguments+=("--split-count=$SPLIT_COUNT")
+        fi
+
+        if [[ -n "$SSH_KEY_PATH" ]]; then
+          arguments+=("--ssh-key-path=$SSH_KEY_PATH")
+        fi
+
+        if [[ -n "$SSH_PASSPHRASE" ]]; then
+          arguments+=("--ssh-passphrase=$SSH_PASSPHRASE")
+        fi
+
+        if [[ "$SYMLINKS" == 'true' ]]; then
+          arguments+=('--symlinks')
+        fi
+
+        if [[ -n "$SYNC_DELETES" ]]; then
+          arguments+=("--sync-deletes=$SYNC_DELETES")
+        fi
+
+        if [[ -n "$TARGET_PROPS" ]]; then
+          arguments+=("--target-props=$TARGET_PROPS")
+        fi
+
+        if [[ -n "$THREADS" ]]; then
+          arguments+=("--threads=$THREADS")
+        fi
+
+        if [[ -n "$URL" ]]; then
+          arguments+=("--url=$URL")
+        fi
+
+        if [[ -n "$USER" ]]; then
+          arguments+=("--user=$USER")
+        fi
+
+        command='jf'
+        for argument in "${arguments[@]}"; do
+          printf -v escaped '%q' "$argument"
+          command+=" $escaped"
+        done
+
+        echo "Executing JFrog CLI Command:"
+        echo "$command"
+        echo "command=$command" >> "$GITHUB_OUTPUT"
+
+        if [[ "$IS_TEST" == 'false' ]]; then
+          jf "${arguments[@]}"
+        fi
+
+    - name: Run JFrog CLI command
+      id: run_pwsh
+      if: ${{ inputs.shell == 'powershell' || inputs.shell == 'pwsh' }}
+      shell: ${{ inputs.shell }}
+      env:
+        SOURCE_PATTERN: ${{ inputs.source-pattern }}
+        TARGET_PATTERN: ${{ inputs.target-pattern }}
+        FORMAT: ${{ inputs.format }}
+        ACCESS_TOKEN: ${{ inputs.access-token }}
+        ANT: ${{ inputs.ant }}
+        ARCHIVE: ${{ inputs.archive }}
+        BUILD_NAME: ${{ inputs.build-name }}
+        BUILD_NUMBER: ${{ inputs.build-number }}
+        CHUNK_SIZE: ${{ inputs.chunk-size }}
+        CLIENT_CERT_KEY_PATH: ${{ inputs.client-cert-key-path }}
+        CLIENT_CERT_PATH: ${{ inputs.client-cert-path }}
+        DEB: ${{ inputs.deb }}
+        DETAILED_SUMMARY: ${{ inputs.detailed-summary }}
+        DRY_RUN: ${{ inputs.dry-run }}
+        EXCLUSIONS: ${{ inputs.exclusions }}
+        EXPLODE: ${{ inputs.explode }}
+        FAIL_NO_OP: ${{ inputs.fail-no-op }}
+        FLAT: ${{ inputs.flat }}
+        INCLUDE_DIRS: ${{ inputs.include-dirs }}
+        INSECURE_TLS: ${{ inputs.insecure-tls }}
+        MIN_SPLIT: ${{ inputs.min-split }}
+        MODULE: ${{ inputs.module }}
+        PASSWORD: ${{ inputs.password }}
+        PROJECT: ${{ inputs.project }}
+        QUIET: ${{ inputs.quiet }}
+        RECURSIVE: ${{ inputs.recursive }}
+        REGEXP: ${{ inputs.regexp }}
+        RETRIES: ${{ inputs.retries }}
+        RETRY_WAIT_TIME: ${{ inputs.retry-wait-time }}
+        SERVER_ID: ${{ inputs.server-id }}
+        SPEC: ${{ inputs.spec }}
+        SPEC_JSON: ${{ inputs.spec-json }}
+        SPEC_VARS: ${{ inputs.spec-vars }}
+        SPLIT_COUNT: ${{ inputs.split-count }}
+        SSH_KEY_PATH: ${{ inputs.ssh-key-path }}
+        SSH_PASSPHRASE: ${{ inputs.ssh-passphrase }}
+        SYMLINKS: ${{ inputs.symlinks }}
+        SYNC_DELETES: ${{ inputs.sync-deletes }}
+        TARGET_PROPS: ${{ inputs.target-props }}
+        THREADS: ${{ inputs.threads }}
+        URL: ${{ inputs.url }}
+        USER: ${{ inputs.user }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        $arguments = @(
+          'rt'
+          'upload'
+          "$env:SOURCE_PATTERN"
+          "$env:TARGET_PATTERN"
+        )
+
+        if (-not [string]::IsNullOrWhiteSpace($env:FORMAT)) {
+          $arguments += "--format=$env:FORMAT"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:ACCESS_TOKEN)) {
+          $arguments += "--access-token=$env:ACCESS_TOKEN"
+        }
+
+        if ($env:ANT -eq 'true') {
+          $arguments += '--ant'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:ARCHIVE)) {
+          $arguments += "--archive=$env:ARCHIVE"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:BUILD_NAME)) {
+          $arguments += "--build-name=$env:BUILD_NAME"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:BUILD_NUMBER)) {
+          $arguments += "--build-number=$env:BUILD_NUMBER"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:CHUNK_SIZE)) {
+          $arguments += "--chunk-size=$env:CHUNK_SIZE"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:CLIENT_CERT_KEY_PATH)) {
+          $arguments += "--client-cert-key-path=$env:CLIENT_CERT_KEY_PATH"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:CLIENT_CERT_PATH)) {
+          $arguments += "--client-cert-path=$env:CLIENT_CERT_PATH"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:DEB)) {
+          $arguments += "--deb=$env:DEB"
+        }
+
+        if ($env:DETAILED_SUMMARY -eq 'true') {
+          $arguments += '--detailed-summary'
+        }
+
+        if ($env:DRY_RUN -eq 'true') {
+          $arguments += '--dry-run'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:EXCLUSIONS)) {
+          $arguments += "--exclusions=$env:EXCLUSIONS"
+        }
+
+        if ($env:EXPLODE -eq 'true') {
+          $arguments += '--explode'
+        }
+
+        if ($env:FAIL_NO_OP -eq 'true') {
+          $arguments += '--fail-no-op'
+        }
+
+        if ($env:FLAT -eq 'true') {
+          $arguments += '--flat'
+        }
+
+        if ($env:INCLUDE_DIRS -eq 'true') {
+          $arguments += '--include-dirs'
+        }
+
+        if ($env:INSECURE_TLS -eq 'true') {
+          $arguments += '--insecure-tls'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:MIN_SPLIT)) {
+          $arguments += "--min-split=$env:MIN_SPLIT"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:MODULE)) {
+          $arguments += "--module=$env:MODULE"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:PASSWORD)) {
+          $arguments += "--password=$env:PASSWORD"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:PROJECT)) {
+          $arguments += "--project=$env:PROJECT"
+        }
+
+        if ($env:QUIET -eq 'true') {
+          $arguments += '--quiet'
+        }
+
+        if ($env:RECURSIVE -eq 'true') {
+          $arguments += '--recursive'
+        }
+
+        if ($env:REGEXP -eq 'true') {
+          $arguments += '--regexp'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:RETRIES)) {
+          $arguments += "--retries=$env:RETRIES"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:RETRY_WAIT_TIME)) {
+          $arguments += "--retry-wait-time=$env:RETRY_WAIT_TIME"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SERVER_ID)) {
+          $arguments += "--server-id=$env:SERVER_ID"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SPEC)) {
+          $arguments += "--spec=$env:SPEC"
+        }
+        elseif (-not [string]::IsNullOrWhiteSpace($env:SPEC_JSON)) {
+          $specFileName = "spec.json"
+
+          Write-Host "Writing $specFileName file with the content"
+          Write-Host ""
+          Write-Host $env:SPEC_JSON
+          Write-Host ""
+
+          [System.IO.File]::WriteAllText(
+            $specFileName,
+            $env:SPEC_JSON,
+            [System.Text.UTF8Encoding]::new($false))
+
+          $arguments += "--spec=$specFileName"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SPEC_VARS)) {
+          $arguments += "--spec-vars=$env:SPEC_VARS"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SPLIT_COUNT)) {
+          $arguments += "--split-count=$env:SPLIT_COUNT"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SSH_KEY_PATH)) {
+          $arguments += "--ssh-key-path=$env:SSH_KEY_PATH"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SSH_PASSPHRASE)) {
+          $arguments += "--ssh-passphrase=$env:SSH_PASSPHRASE"
+        }
+
+        if ($env:SYMLINKS -eq 'true') {
+          $arguments += '--symlinks'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SYNC_DELETES)) {
+          $arguments += "--sync-deletes=$env:SYNC_DELETES"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:TARGET_PROPS)) {
+          $arguments += "--target-props=$env:TARGET_PROPS"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:THREADS)) {
+          $arguments += "--threads=$env:THREADS"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:URL)) {
+          $arguments += "--url=$env:URL"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:USER)) {
+          $arguments += "--user=$env:USER"
+        }
+
+        $command = "jf $($arguments -join ' ')"
+        $delimiter = [guid]::NewGuid().ToString()
+
+        @(
+          "command<<$delimiter"
+          $command
+          $delimiter
+        ) >> $env:GITHUB_OUTPUT
+
+        if ($env:IS_TEST -eq 'false') {
+          & jf @arguments
+        }

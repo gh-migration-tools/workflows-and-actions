@@ -1,0 +1,350 @@
+name: jfrog-docker
+description: 'Run any `docker` command, including `jf docker scan` for scanning a local image with JFrog Xray.'
+
+inputs:
+  args:
+    description: 'The `docker` arguments. Acceptable values are: `login`, `build`, `push`, `pull`, `scan`.'
+    required: true
+    default: ''
+  build-name:
+    description: 'Providing this option will collect and record build info for this build name. Build number option is mandatory when this option is provided.'
+    required: false
+    default: ''
+  build-number:
+    description: 'Providing this option will collect and record build info for this build number. Build name option is mandatory when this option is provided.'
+    required: false
+    default: ''
+  bypass-archive-limits:
+    description: 'Set to `true` to bypass the indexer-app archive limits.'
+    required: false
+    default: 'false'
+  detailed-summary:
+    description: 'Set to `true` to include a list of the affected files in the command summary.'
+    required: false
+    default: 'false'
+  extended-table:
+    description: 'Set to `true` if you''d like the table to include extended fields such as CVSS & Xray Issue Id. Ignored if provided `format` is not `table`.'
+    required: false
+    default: 'false'
+  fail:
+    description: 'Set to `false` if you don''t wish the command to return exit code 3, even if the Fail Build rule is matched by Xray.'
+    required: false
+    default: ''
+  fixable-only:
+    description: 'Set to `true` if you wish to display issues that have a fixed version only.'
+    required: false
+    default: ''
+  format:
+    description: 'Defines the output format of the command. Acceptable values are: `table`, `json`, `simple-json` and `sarif`. Note: the `json` format doesn''t include information about scans that are included as part of the Advanced Security package.'
+    required: false
+    default: ''
+  licenses:
+    description: 'Set to `true` if you''d like to receive licenses from Xray scanning.'
+    required: false
+    default: 'false'
+  min-severity:
+    description: 'Set the minimum severity of issues to display. The following values are accepted: `Low`, `Medium`, `High` or `Critical`.'
+    required: false
+    default: ''
+  module:
+    description: 'Optional module name for the build info. Build name and number options are mandatory when this option is provided.'
+    required: false
+    default: ''
+  project:
+    description: 'JFrog Artifactory project key.'
+    required: false
+    default: ''
+  repo-path:
+    description: 'Target repo path, to enable Xray to determine watches accordingly.'
+    required: false
+    default: ''
+  server-id:
+    description: 'Server ID configured using the `jf config` command.'
+    required: false
+    default: ''
+  skip-login:
+    description: 'Set to `true` if you''d like the command to skip performing login.'
+    required: false
+    default: 'false'
+  threads:
+    description: 'Number of working threads.'
+    required: false
+    default: ''
+  validate-sha:
+    description: 'Set to `true` to enable SHA validation during Docker push.'
+    required: false
+    default: 'false'
+  vuln:
+    description: 'Set to `true` if you''d like to receive an additional view of all vulnerabilities, regardless of the policy configured in Xray. Ignored if provided `format` is `sarif`.'
+    required: false
+    default: 'false'
+  watches:
+    description: 'A comma-separated (`,`) list of Xray watches, to determine Xray''s violations creation.'
+    required: false
+    default: ''
+  shell:
+    description: 'Shell to use for run steps. Acceptable values are: `bash`, `powershell`, `pwsh`.'
+    required: false
+    default: 'bash'
+  is-test:
+    description: 'Indicates if the action is tested.'
+    required: false
+    default: 'false'
+
+outputs:
+  command:
+    description: The JFrog command
+    value: ${{ steps.run_bash.outputs.command || steps.run_pwsh.outputs.command }}
+
+runs:
+  using: composite
+  steps:
+    - name: Run JFrog CLI command
+      id: run_bash
+      if: ${{ inputs.shell == 'bash' }}
+      shell: bash
+      env:
+        ARGS: ${{ inputs.args }}
+        BUILD_NAME: ${{ inputs.build-name }}
+        BUILD_NUMBER: ${{ inputs.build-number }}
+        BYPASS_ARCHIVE_LIMITS: ${{ inputs.bypass-archive-limits }}
+        DETAILED_SUMMARY: ${{ inputs.detailed-summary }}
+        EXTENDED_TABLE: ${{ inputs.extended-table }}
+        FAIL: ${{ inputs.fail }}
+        FIXABLE_ONLY: ${{ inputs.fixable-only }}
+        FORMAT: ${{ inputs.format }}
+        LICENSES: ${{ inputs.licenses }}
+        MIN_SEVERITY: ${{ inputs.min-severity }}
+        MODULE: ${{ inputs.module }}
+        PROJECT: ${{ inputs.project }}
+        REPO_PATH: ${{ inputs.repo-path }}
+        SERVER_ID: ${{ inputs.server-id }}
+        SKIP_LOGIN: ${{ inputs.skip-login }}
+        THREADS: ${{ inputs.threads }}
+        VALIDATE_SHA: ${{ inputs.validate-sha }}
+        VULN: ${{ inputs.vuln }}
+        WATCHES: ${{ inputs.watches }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        arguments=(
+          'docker'
+        )
+
+        if [[ -n "$ARGS" ]]; then
+          read -r -a split_args <<< "$ARGS"
+          arguments+=("${split_args[@]}")
+        fi
+
+        if [[ -n "$BUILD_NAME" ]]; then
+          arguments+=("--build-name=$BUILD_NAME")
+        fi
+
+        if [[ -n "$BUILD_NUMBER" ]]; then
+          arguments+=("--build-number=$BUILD_NUMBER")
+        fi
+
+        if [[ "$BYPASS_ARCHIVE_LIMITS" == 'true' ]]; then
+          arguments+=('--bypass-archive-limits')
+        fi
+
+        if [[ "$DETAILED_SUMMARY" == 'true' ]]; then
+          arguments+=('--detailed-summary')
+        fi
+
+        if [[ "$EXTENDED_TABLE" == 'true' ]]; then
+          arguments+=('--extended-table')
+        fi
+
+        if [[ -n "$FAIL" ]]; then
+          arguments+=("--fail=$FAIL")
+        fi
+
+        if [[ -n "$FIXABLE_ONLY" ]]; then
+          arguments+=("--fixable-only=$FIXABLE_ONLY")
+        fi
+
+        if [[ -n "$FORMAT" ]]; then
+          arguments+=("--format=$FORMAT")
+        fi
+
+        if [[ "$LICENSES" == 'true' ]]; then
+          arguments+=('--licenses')
+        fi
+
+        if [[ -n "$MIN_SEVERITY" ]]; then
+          arguments+=("--min-severity=$MIN_SEVERITY")
+        fi
+
+        if [[ -n "$MODULE" ]]; then
+          arguments+=("--module=$MODULE")
+        fi
+
+        if [[ -n "$PROJECT" ]]; then
+          arguments+=("--project=$PROJECT")
+        fi
+
+        if [[ -n "$REPO_PATH" ]]; then
+          arguments+=("--repo-path=$REPO_PATH")
+        fi
+
+        if [[ -n "$SERVER_ID" ]]; then
+          arguments+=("--server-id=$SERVER_ID")
+        fi
+
+        if [[ "$SKIP_LOGIN" == 'true' ]]; then
+          arguments+=('--skip-login')
+        fi
+
+        if [[ -n "$THREADS" ]]; then
+          arguments+=("--threads=$THREADS")
+        fi
+
+        if [[ "$VALIDATE_SHA" == 'true' ]]; then
+          arguments+=('--validate-sha')
+        fi
+
+        if [[ "$VULN" == 'true' ]]; then
+          arguments+=('--vuln')
+        fi
+
+        if [[ -n "$WATCHES" ]]; then
+          arguments+=("--watches=$WATCHES")
+        fi
+
+        command='jf'
+        for argument in "${arguments[@]}"; do
+          printf -v escaped '%q' "$argument"
+          command+=" $escaped"
+        done
+
+        echo "Executing JFrog CLI Command:"
+        echo "$command"
+        echo "command=$command" >> "$GITHUB_OUTPUT"
+
+        if [[ "$IS_TEST" == 'false' ]]; then
+          jf "${arguments[@]}"
+        fi
+
+    - name: Run JFrog CLI command
+      id: run_pwsh
+      if: ${{ inputs.shell == 'powershell' || inputs.shell == 'pwsh' }}
+      shell: ${{ inputs.shell }}
+      env:
+        ARGS: ${{ inputs.args }}
+        BUILD_NAME: ${{ inputs.build-name }}
+        BUILD_NUMBER: ${{ inputs.build-number }}
+        BYPASS_ARCHIVE_LIMITS: ${{ inputs.bypass-archive-limits }}
+        DETAILED_SUMMARY: ${{ inputs.detailed-summary }}
+        EXTENDED_TABLE: ${{ inputs.extended-table }}
+        FAIL: ${{ inputs.fail }}
+        FIXABLE_ONLY: ${{ inputs.fixable-only }}
+        FORMAT: ${{ inputs.format }}
+        LICENSES: ${{ inputs.licenses }}
+        MIN_SEVERITY: ${{ inputs.min-severity }}
+        MODULE: ${{ inputs.module }}
+        PROJECT: ${{ inputs.project }}
+        REPO_PATH: ${{ inputs.repo-path }}
+        SERVER_ID: ${{ inputs.server-id }}
+        SKIP_LOGIN: ${{ inputs.skip-login }}
+        THREADS: ${{ inputs.threads }}
+        VALIDATE_SHA: ${{ inputs.validate-sha }}
+        VULN: ${{ inputs.vuln }}
+        WATCHES: ${{ inputs.watches }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        $arguments = @(
+          'docker'
+        )
+
+        if (-not [string]::IsNullOrWhiteSpace($env:ARGS)) {
+          $arguments += $env:ARGS -split '\s+' | Where-Object { $_ }
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:BUILD_NAME)) {
+          $arguments += "--build-name=$env:BUILD_NAME"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:BUILD_NUMBER)) {
+          $arguments += "--build-number=$env:BUILD_NUMBER"
+        }
+
+        if ($env:BYPASS_ARCHIVE_LIMITS -eq 'true') {
+          $arguments += '--bypass-archive-limits'
+        }
+
+        if ($env:DETAILED_SUMMARY -eq 'true') {
+          $arguments += '--detailed-summary'
+        }
+
+        if ($env:EXTENDED_TABLE -eq 'true') {
+          $arguments += '--extended-table'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:FAIL)) {
+          $arguments += "--fail=$env:FAIL"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:FIXABLE_ONLY)) {
+          $arguments += "--fixable-only=$env:FIXABLE_ONLY"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:FORMAT)) {
+          $arguments += "--format=$env:FORMAT"
+        }
+
+        if ($env:LICENSES -eq 'true') {
+          $arguments += '--licenses'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:MIN_SEVERITY)) {
+          $arguments += "--min-severity=$env:MIN_SEVERITY"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:MODULE)) {
+          $arguments += "--module=$env:MODULE"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:PROJECT)) {
+          $arguments += "--project=$env:PROJECT"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:REPO_PATH)) {
+          $arguments += "--repo-path=$env:REPO_PATH"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SERVER_ID)) {
+          $arguments += "--server-id=$env:SERVER_ID"
+        }
+
+        if ($env:SKIP_LOGIN -eq 'true') {
+          $arguments += '--skip-login'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:THREADS)) {
+          $arguments += "--threads=$env:THREADS"
+        }
+
+        if ($env:VALIDATE_SHA -eq 'true') {
+          $arguments += '--validate-sha'
+        }
+
+        if ($env:VULN -eq 'true') {
+          $arguments += '--vuln'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:WATCHES)) {
+          $arguments += "--watches=$env:WATCHES"
+        }
+
+        $command = "jf $($arguments -join ' ')"
+        $delimiter = [guid]::NewGuid().ToString()
+
+        @(
+          "command<<$delimiter"
+          $command
+          $delimiter
+        ) >> $env:GITHUB_OUTPUT
+
+        if ($env:IS_TEST -eq 'false') {
+          & jf @arguments
+        }

@@ -1,0 +1,217 @@
+name: jfrog-go-publish
+description: 'Publishe `go` package and/or its dependencies to Artifactory.'
+
+inputs:
+  project-version:
+    description: 'Package version to be published.'
+    required: true
+    default: ''
+  access-token:
+    description: 'JFrog access token.'
+    required: false
+    default: ''
+  build-name:
+    description: 'Providing this option will collect and record build info for this build name. Build number option is mandatory when this option is provided.'
+    required: false
+    default: ''
+  build-number:
+    description: 'Providing this option will collect and record build info for this build number. Build name option is mandatory when this option is provided.'
+    required: false
+    default: ''
+  detailed-summary:
+    description: 'Set to `true` to include a list of the affected files in the command summary.'
+    required: false
+    default: 'false'
+  exclusions:
+    description: 'List of semicolon-separated (`;`) exclusions. Exclusions can include the `*` and the `?` wildcards.'
+    required: false
+    default: ''
+  module:
+    description: 'Optional module name for the build info. Build name and number options are mandatory when this option is provided.'
+    required: false
+    default: ''
+  password:
+    description: 'JFrog password.'
+    required: false
+    default: ''
+  project:
+    description: 'JFrog Artifactory project key.'
+    required: false
+    default: ''
+  url:
+    description: 'JFrog Artifactory URL. (example: `https://acme.jfrog.io/artifactory`)'
+    required: false
+    default: ''
+  user:
+    description: 'JFrog username.'
+    required: false
+    default: ''
+  shell:
+    description: 'Shell to use for run steps. Acceptable values are: `bash`, `powershell`, `pwsh`.'
+    required: false
+    default: 'bash'
+  is-test:
+    description: 'Indicates if the action is tested.'
+    required: false
+    default: 'false'
+
+outputs:
+  command:
+    description: The JFrog command
+    value: ${{ steps.run_bash.outputs.command || steps.run_pwsh.outputs.command }}
+
+runs:
+  using: composite
+  steps:
+    - name: Run JFrog CLI command
+      id: run_bash
+      if: ${{ inputs.shell == 'bash' }}
+      shell: bash
+      env:
+        PROJECT_VERSION: ${{ inputs.project-version }}
+        ACCESS_TOKEN: ${{ inputs.access-token }}
+        BUILD_NAME: ${{ inputs.build-name }}
+        BUILD_NUMBER: ${{ inputs.build-number }}
+        DETAILED_SUMMARY: ${{ inputs.detailed-summary }}
+        EXCLUSIONS: ${{ inputs.exclusions }}
+        MODULE: ${{ inputs.module }}
+        PASSWORD: ${{ inputs.password }}
+        PROJECT: ${{ inputs.project }}
+        URL: ${{ inputs.url }}
+        USER: ${{ inputs.user }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        arguments=(
+          'go-publish'
+          "$PROJECT_VERSION"
+        )
+
+        if [[ -n "$ACCESS_TOKEN" ]]; then
+          arguments+=("--access-token=$ACCESS_TOKEN")
+        fi
+
+        if [[ -n "$BUILD_NAME" ]]; then
+          arguments+=("--build-name=$BUILD_NAME")
+        fi
+
+        if [[ -n "$BUILD_NUMBER" ]]; then
+          arguments+=("--build-number=$BUILD_NUMBER")
+        fi
+
+        if [[ "$DETAILED_SUMMARY" == 'true' ]]; then
+          arguments+=('--detailed-summary')
+        fi
+
+        if [[ -n "$EXCLUSIONS" ]]; then
+          arguments+=("--exclusions=$EXCLUSIONS")
+        fi
+
+        if [[ -n "$MODULE" ]]; then
+          arguments+=("--module=$MODULE")
+        fi
+
+        if [[ -n "$PASSWORD" ]]; then
+          arguments+=("--password=$PASSWORD")
+        fi
+
+        if [[ -n "$PROJECT" ]]; then
+          arguments+=("--project=$PROJECT")
+        fi
+
+        if [[ -n "$URL" ]]; then
+          arguments+=("--url=$URL")
+        fi
+
+        if [[ -n "$USER" ]]; then
+          arguments+=("--user=$USER")
+        fi
+
+        command='jf'
+        for argument in "${arguments[@]}"; do
+          printf -v escaped '%q' "$argument"
+          command+=" $escaped"
+        done
+
+        echo "Executing JFrog CLI Command:"
+        echo "$command"
+        echo "command=$command" >> "$GITHUB_OUTPUT"
+
+        if [[ "$IS_TEST" == 'false' ]]; then
+          jf "${arguments[@]}"
+        fi
+
+    - name: Run JFrog CLI command
+      id: run_pwsh
+      if: ${{ inputs.shell == 'powershell' || inputs.shell == 'pwsh' }}
+      shell: ${{ inputs.shell }}
+      env:
+        PROJECT_VERSION: ${{ inputs.project-version }}
+        ACCESS_TOKEN: ${{ inputs.access-token }}
+        BUILD_NAME: ${{ inputs.build-name }}
+        BUILD_NUMBER: ${{ inputs.build-number }}
+        DETAILED_SUMMARY: ${{ inputs.detailed-summary }}
+        EXCLUSIONS: ${{ inputs.exclusions }}
+        MODULE: ${{ inputs.module }}
+        PASSWORD: ${{ inputs.password }}
+        PROJECT: ${{ inputs.project }}
+        URL: ${{ inputs.url }}
+        USER: ${{ inputs.user }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        $arguments = @(
+          'go-publish'
+          "$env:PROJECT_VERSION"
+        )
+
+        if (-not [string]::IsNullOrWhiteSpace($env:ACCESS_TOKEN)) {
+          $arguments += "--access-token=$env:ACCESS_TOKEN"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:BUILD_NAME)) {
+          $arguments += "--build-name=$env:BUILD_NAME"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:BUILD_NUMBER)) {
+          $arguments += "--build-number=$env:BUILD_NUMBER"
+        }
+
+        if ($env:DETAILED_SUMMARY -eq 'true') {
+          $arguments += '--detailed-summary'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:EXCLUSIONS)) {
+          $arguments += "--exclusions=$env:EXCLUSIONS"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:MODULE)) {
+          $arguments += "--module=$env:MODULE"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:PASSWORD)) {
+          $arguments += "--password=$env:PASSWORD"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:PROJECT)) {
+          $arguments += "--project=$env:PROJECT"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:URL)) {
+          $arguments += "--url=$env:URL"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:USER)) {
+          $arguments += "--user=$env:USER"
+        }
+
+        $command = "jf $($arguments -join ' ')"
+        $delimiter = [guid]::NewGuid().ToString()
+
+        @(
+          "command<<$delimiter"
+          $command
+          $delimiter
+        ) >> $env:GITHUB_OUTPUT
+
+        if ($env:IS_TEST -eq 'false') {
+          & jf @arguments
+        }

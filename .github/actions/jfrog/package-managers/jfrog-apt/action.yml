@@ -1,0 +1,239 @@
+name: jfrog-apt
+description: 'Run `apt-get` commands against a JFrog Artifactory Debian repository.'
+
+inputs:
+  command:
+    description: 'The `apt-get`/`apt-cache`/`dpkg-query` commands.'
+    required: true
+    default: ''
+  args:
+    description: 'The command arguments.'
+    required: true
+    default: ''
+  build-name:
+    description: 'Providing this option will collect and record build info for this build name. Build number option is mandatory when this option is provided.'
+    required: false
+    default: ''
+  build-number:
+    description: 'Providing this option will collect and record build info for this build number. Build name option is mandatory when this option is provided.'
+    required: false
+    default: ''
+  component:
+    description: 'Debian component (e.g. `main`, `contrib`, `non-free`). Multiple components: `--component "main contrib non-free"`.'
+    required: false
+    default: ''
+  dist:
+    description: 'Debian distribution name (e.g. `noble`, `jammy`).'
+    required: false
+    default: ''
+  module:
+    description: 'Optional module name for the build info. Build name and number options are mandatory when this option is provided.'
+    required: false
+    default: ''
+  project:
+    description: 'JFrog Artifactory project key.'
+    required: false
+    default: ''
+  repo:
+    description: 'Specifies the Artifactory repository name for the selected package manager, replacing the interactive repository selection. The interactive selection offers virtual repositories of the matching package type, which is normally what this should be set to. Note that `gradle` matches the `gradle` package type rather than `maven`, and `pip`, `pipenv`, `poetry`, `twine` and `uv` all match `pypi`.'
+    required: false
+    default: ''
+  server-id:
+    description: 'Server ID configured using the `jf config` command.'
+    required: false
+    default: ''
+  skip-login:
+    description: "Set to `true` if you'd like the command to skip performing login."
+    required: false
+    default: 'false'
+  trusted:
+    description: 'Skip GPG signature verification. Use only for testing when the repository has no GPG key configured. Mutually exclusive with `--import-key`.'
+    required: false
+    default: 'false'
+  shell:
+    description: 'Shell to use for run steps. Acceptable values are: `bash`, `powershell`, `pwsh`.'
+    required: false
+    default: 'bash'
+  is-test:
+    description: 'Indicates if the action is tested.'
+    required: false
+    default: 'false'
+
+outputs:
+  command:
+    description: The JFrog command
+    value: ${{ steps.run_bash.outputs.command || steps.run_pwsh.outputs.command }}
+
+runs:
+  using: composite
+  steps:
+    - name: Run JFrog CLI command
+      id: run_bash
+      if: ${{ inputs.shell == 'bash' }}
+      shell: bash
+      env:
+        COMMAND: ${{ inputs.command }}
+        ARGS: ${{ inputs.args }}
+        BUILD_NAME: ${{ inputs.build-name }}
+        BUILD_NUMBER: ${{ inputs.build-number }}
+        COMPONENT: ${{ inputs.component }}
+        DIST: ${{ inputs.dist }}
+        MODULE: ${{ inputs.module }}
+        PROJECT: ${{ inputs.project }}
+        REPO: ${{ inputs.repo }}
+        SERVER_ID: ${{ inputs.server-id }}
+        SKIP_LOGIN: ${{ inputs.skip-login }}
+        TRUSTED: ${{ inputs.trusted }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        arguments=(
+          'apt'
+        )
+
+        if [[ -n "$COMMAND" ]]; then
+          read -r -a split_args <<< "$COMMAND"
+          arguments+=("${split_args[@]}")
+        fi
+
+        if [[ -n "$ARGS" ]]; then
+          read -r -a split_args <<< "$ARGS"
+          arguments+=("${split_args[@]}")
+        fi
+
+        if [[ -n "$BUILD_NAME" ]]; then
+          arguments+=("--build-name=$BUILD_NAME")
+        fi
+
+        if [[ -n "$BUILD_NUMBER" ]]; then
+          arguments+=("--build-number=$BUILD_NUMBER")
+        fi
+
+        if [[ -n "$COMPONENT" ]]; then
+          arguments+=("--component=$COMPONENT")
+        fi
+
+        if [[ -n "$DIST" ]]; then
+          arguments+=("--dist=$DIST")
+        fi
+
+        if [[ -n "$MODULE" ]]; then
+          arguments+=("--module=$MODULE")
+        fi
+
+        if [[ -n "$PROJECT" ]]; then
+          arguments+=("--project=$PROJECT")
+        fi
+
+        if [[ -n "$REPO" ]]; then
+          arguments+=("--repo=$REPO")
+        fi
+
+        if [[ -n "$SERVER_ID" ]]; then
+          arguments+=("--server-id=$SERVER_ID")
+        fi
+
+        if [[ "$SKIP_LOGIN" == 'true' ]]; then
+          arguments+=('--skip-login')
+        fi
+
+        if [[ "$TRUSTED" == 'true' ]]; then
+          arguments+=('--trusted')
+        fi
+
+        command='jf'
+        for argument in "${arguments[@]}"; do
+          printf -v escaped '%q' "$argument"
+          command+=" $escaped"
+        done
+
+        echo "Executing JFrog CLI Command:"
+        echo "$command"
+        echo "command=$command" >> "$GITHUB_OUTPUT"
+
+        if [[ "$IS_TEST" == 'false' ]]; then
+          jf "${arguments[@]}"
+        fi
+
+    - name: Run JFrog CLI command
+      id: run_pwsh
+      if: ${{ inputs.shell == 'powershell' || inputs.shell == 'pwsh' }}
+      shell: ${{ inputs.shell }}
+      env:
+        COMMAND: ${{ inputs.command }}
+        ARGS: ${{ inputs.args }}
+        BUILD_NAME: ${{ inputs.build-name }}
+        BUILD_NUMBER: ${{ inputs.build-number }}
+        COMPONENT: ${{ inputs.component }}
+        DIST: ${{ inputs.dist }}
+        MODULE: ${{ inputs.module }}
+        PROJECT: ${{ inputs.project }}
+        REPO: ${{ inputs.repo }}
+        SERVER_ID: ${{ inputs.server-id }}
+        SKIP_LOGIN: ${{ inputs.skip-login }}
+        TRUSTED: ${{ inputs.trusted }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        $arguments = @(
+          'apt'
+        )
+
+        if (-not [string]::IsNullOrWhiteSpace($env:COMMAND)) {
+          $arguments += $env:COMMAND -split '\s+' | Where-Object { $_ }
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:ARGS)) {
+          $arguments += $env:ARGS -split '\s+' | Where-Object { $_ }
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:BUILD_NAME)) {
+          $arguments += "--build-name=$env:BUILD_NAME"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:BUILD_NUMBER)) {
+          $arguments += "--build-number=$env:BUILD_NUMBER"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:COMPONENT)) {
+          $arguments += "--component=$env:COMPONENT"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:DIST)) {
+          $arguments += "--dist=$env:DIST"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:MODULE)) {
+          $arguments += "--module=$env:MODULE"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:PROJECT)) {
+          $arguments += "--project=$env:PROJECT"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:REPO)) {
+          $arguments += "--repo=$env:REPO"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SERVER_ID)) {
+          $arguments += "--server-id=$env:SERVER_ID"
+        }
+
+        if ($env:SKIP_LOGIN -eq 'true') {
+          $arguments += '--skip-login'
+        }
+
+        if ($env:TRUSTED -eq 'true') {
+          $arguments += '--trusted'
+        }
+
+        $command = "jf $($arguments -join ' ')"
+        $delimiter = [guid]::NewGuid().ToString()
+
+        @(
+          "command<<$delimiter"
+          $command
+          $delimiter
+        ) >> $env:GITHUB_OUTPUT
+
+        if ($env:IS_TEST -eq 'false') {
+          & jf @arguments
+        }

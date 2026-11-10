@@ -1,0 +1,199 @@
+name: jfrog-rt-transfer-config
+description: 'Copy the full configuration from a source Artifactory server to a target server.'
+
+inputs:
+  source-server-id:
+    description: 'The source server ID. The configuration will be exported from this server.'
+    required: true
+    default: ''
+  target-server-id:
+    description: 'The target server ID. The configuration will be imported to this server.'
+    required: true
+    default: ''
+  exclude-repos:
+    description: 'List of semicolon-separated (`;`) repositories to exclude from the transfer. You can use wildcards to specify patterns for the repositories'' names.'
+    required: false
+    default: ''
+  force:
+    description: 'Set to `true` to allow config transfer to a non-empty Artifactory server.'
+    required: false
+    default: 'false'
+  format:
+    description: 'Defines the output format of the command. Acceptable values are: `json`.'
+    required: false
+    default: ''
+  include-repos:
+    description: 'List of semicolon-separated (`;`) repositories to include in the transfer. You can use wildcards to specify patterns for the repositories'' names.'
+    required: false
+    default: ''
+  prechecks:
+    description: 'Set to `true` to run pre-transfer checks.'
+    required: false
+    default: 'false'
+  source-working-dir:
+    description: 'Local working directory on the source Artifactory server.'
+    required: false
+    default: ''
+  target-working-dir:
+    description: 'Local working directory on the target Artifactory server.'
+    required: false
+    default: ''
+  verbose:
+    description: 'Set to `true` to increase verbosity during the export configuration from the source Artifactory phase.'
+    required: false
+    default: 'false'
+  shell:
+    description: 'Shell to use for run steps. Acceptable values are: `bash`, `powershell`, `pwsh`.'
+    required: false
+    default: 'bash'
+  is-test:
+    description: 'Indicates if the action is tested.'
+    required: false
+    default: 'false'
+
+outputs:
+  command:
+    description: The JFrog command
+    value: ${{ steps.run_bash.outputs.command || steps.run_pwsh.outputs.command }}
+
+runs:
+  using: composite
+  steps:
+    - name: Run JFrog CLI command
+      id: run_bash
+      if: ${{ inputs.shell == 'bash' }}
+      shell: bash
+      env:
+        SOURCE_SERVER_ID: ${{ inputs.source-server-id }}
+        TARGET_SERVER_ID: ${{ inputs.target-server-id }}
+        EXCLUDE_REPOS: ${{ inputs.exclude-repos }}
+        FORCE: ${{ inputs.force }}
+        FORMAT: ${{ inputs.format }}
+        INCLUDE_REPOS: ${{ inputs.include-repos }}
+        PRECHECKS: ${{ inputs.prechecks }}
+        SOURCE_WORKING_DIR: ${{ inputs.source-working-dir }}
+        TARGET_WORKING_DIR: ${{ inputs.target-working-dir }}
+        VERBOSE: ${{ inputs.verbose }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        arguments=(
+          'rt'
+          'transfer-config'
+          "$SOURCE_SERVER_ID"
+          "$TARGET_SERVER_ID"
+        )
+
+        if [[ -n "$EXCLUDE_REPOS" ]]; then
+          arguments+=("--exclude-repos=$EXCLUDE_REPOS")
+        fi
+
+        if [[ "$FORCE" == 'true' ]]; then
+          arguments+=('--force')
+        fi
+
+        if [[ -n "$FORMAT" ]]; then
+          arguments+=("--format=$FORMAT")
+        fi
+
+        if [[ -n "$INCLUDE_REPOS" ]]; then
+          arguments+=("--include-repos=$INCLUDE_REPOS")
+        fi
+
+        if [[ "$PRECHECKS" == 'true' ]]; then
+          arguments+=('--prechecks')
+        fi
+
+        if [[ -n "$SOURCE_WORKING_DIR" ]]; then
+          arguments+=("--source-working-dir=$SOURCE_WORKING_DIR")
+        fi
+
+        if [[ -n "$TARGET_WORKING_DIR" ]]; then
+          arguments+=("--target-working-dir=$TARGET_WORKING_DIR")
+        fi
+
+        if [[ "$VERBOSE" == 'true' ]]; then
+          arguments+=('--verbose')
+        fi
+
+        command='jf'
+        for argument in "${arguments[@]}"; do
+          printf -v escaped '%q' "$argument"
+          command+=" $escaped"
+        done
+
+        echo "Executing JFrog CLI Command:"
+        echo "$command"
+        echo "command=$command" >> "$GITHUB_OUTPUT"
+
+        if [[ "$IS_TEST" == 'false' ]]; then
+          jf "${arguments[@]}"
+        fi
+
+    - name: Run JFrog CLI command
+      id: run_pwsh
+      if: ${{ inputs.shell == 'powershell' || inputs.shell == 'pwsh' }}
+      shell: ${{ inputs.shell }}
+      env:
+        SOURCE_SERVER_ID: ${{ inputs.source-server-id }}
+        TARGET_SERVER_ID: ${{ inputs.target-server-id }}
+        EXCLUDE_REPOS: ${{ inputs.exclude-repos }}
+        FORCE: ${{ inputs.force }}
+        FORMAT: ${{ inputs.format }}
+        INCLUDE_REPOS: ${{ inputs.include-repos }}
+        PRECHECKS: ${{ inputs.prechecks }}
+        SOURCE_WORKING_DIR: ${{ inputs.source-working-dir }}
+        TARGET_WORKING_DIR: ${{ inputs.target-working-dir }}
+        VERBOSE: ${{ inputs.verbose }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        $arguments = @(
+          'rt'
+          'transfer-config'
+          "$env:SOURCE_SERVER_ID"
+          "$env:TARGET_SERVER_ID"
+        )
+
+        if (-not [string]::IsNullOrWhiteSpace($env:EXCLUDE_REPOS)) {
+          $arguments += "--exclude-repos=$env:EXCLUDE_REPOS"
+        }
+
+        if ($env:FORCE -eq 'true') {
+          $arguments += '--force'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:FORMAT)) {
+          $arguments += "--format=$env:FORMAT"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:INCLUDE_REPOS)) {
+          $arguments += "--include-repos=$env:INCLUDE_REPOS"
+        }
+
+        if ($env:PRECHECKS -eq 'true') {
+          $arguments += '--prechecks'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SOURCE_WORKING_DIR)) {
+          $arguments += "--source-working-dir=$env:SOURCE_WORKING_DIR"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:TARGET_WORKING_DIR)) {
+          $arguments += "--target-working-dir=$env:TARGET_WORKING_DIR"
+        }
+
+        if ($env:VERBOSE -eq 'true') {
+          $arguments += '--verbose'
+        }
+
+        $command = "jf $($arguments -join ' ')"
+        $delimiter = [guid]::NewGuid().ToString()
+
+        @(
+          "command<<$delimiter"
+          $command
+          $delimiter
+        ) >> $env:GITHUB_OUTPUT
+
+        if ($env:IS_TEST -eq 'false') {
+          & jf @arguments
+        }

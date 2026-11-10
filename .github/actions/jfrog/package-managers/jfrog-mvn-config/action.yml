@@ -1,0 +1,237 @@
+name: jfrog-mvn-config
+description: 'Generate `maven` build configuration.'
+
+inputs:
+  disable-snapshots:
+    description: 'Set to `true` to disable snapshot resolution.'
+    required: false
+    default: 'false'
+  exclude-patterns:
+    description: 'Filter deployed artifacts by setting a wildcard pattern that specifies which artifacts to exclude. You may provide multiple patterns separated by `'', ''`.'
+    required: false
+    default: ''
+  global:
+    description: 'Set to `true` to make the configuration global (for all projects). Specific projects can override the global configuration.'
+    required: false
+    default: 'false'
+  include-patterns:
+    description: 'Filter deployed artifacts by setting a wildcard pattern that specifies which artifacts to include. You may provide multiple patterns separated by `'', ''`.'
+    required: false
+    default: ''
+  repo-deploy-releases:
+    description: 'Deployment repository for release artifacts.'
+    required: false
+    default: ''
+  repo-deploy-snapshots:
+    description: 'Deployment repository for snapshot artifacts.'
+    required: false
+    default: ''
+  repo-resolve-releases:
+    description: 'Resolution repository for release dependencies.'
+    required: false
+    default: ''
+  repo-resolve-snapshots:
+    description: 'Resolution repository for snapshot dependencies.'
+    required: false
+    default: ''
+  server-id-deploy:
+    description: 'Artifactory server ID for deployment. The server should be configured using the `jfrog c add` command.'
+    required: false
+    default: ''
+  server-id-resolve:
+    description: 'Artifactory server ID for resolution. The server should be configured using the `jfrog c add` command.'
+    required: false
+    default: ''
+  snapshots-update-policy:
+    description: 'Set snapshot update policy. Defaults to daily.'
+    required: false
+    default: ''
+  use-wrapper:
+    description: 'Set to `true` to use the wrapper.'
+    required: false
+    default: 'false'
+  shell:
+    description: 'Shell to use for run steps. Acceptable values are: `bash`, `powershell`, `pwsh`.'
+    required: false
+    default: 'bash'
+  is-test:
+    description: 'Indicates if the action is tested.'
+    required: false
+    default: 'false'
+
+outputs:
+  command:
+    description: The JFrog command
+    value: ${{ steps.run_bash.outputs.command || steps.run_pwsh.outputs.command }}
+
+runs:
+  using: composite
+  steps:
+    - name: Run JFrog CLI command
+      id: run_bash
+      if: ${{ inputs.shell == 'bash' }}
+      shell: bash
+      env:
+        DISABLE_SNAPSHOTS: ${{ inputs.disable-snapshots }}
+        EXCLUDE_PATTERNS: ${{ inputs.exclude-patterns }}
+        GLOBAL: ${{ inputs.global }}
+        INCLUDE_PATTERNS: ${{ inputs.include-patterns }}
+        REPO_DEPLOY_RELEASES: ${{ inputs.repo-deploy-releases }}
+        REPO_DEPLOY_SNAPSHOTS: ${{ inputs.repo-deploy-snapshots }}
+        REPO_RESOLVE_RELEASES: ${{ inputs.repo-resolve-releases }}
+        REPO_RESOLVE_SNAPSHOTS: ${{ inputs.repo-resolve-snapshots }}
+        SERVER_ID_DEPLOY: ${{ inputs.server-id-deploy }}
+        SERVER_ID_RESOLVE: ${{ inputs.server-id-resolve }}
+        SNAPSHOTS_UPDATE_POLICY: ${{ inputs.snapshots-update-policy }}
+        USE_WRAPPER: ${{ inputs.use-wrapper }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        arguments=(
+          'mvn-config'
+        )
+
+        if [[ "$DISABLE_SNAPSHOTS" == 'true' ]]; then
+          arguments+=('--disable-snapshots')
+        fi
+
+        if [[ -n "$EXCLUDE_PATTERNS" ]]; then
+          arguments+=("--exclude-patterns=$EXCLUDE_PATTERNS")
+        fi
+
+        if [[ "$GLOBAL" == 'true' ]]; then
+          arguments+=('--global')
+        fi
+
+        if [[ -n "$INCLUDE_PATTERNS" ]]; then
+          arguments+=("--include-patterns=$INCLUDE_PATTERNS")
+        fi
+
+        if [[ -n "$REPO_DEPLOY_RELEASES" ]]; then
+          arguments+=("--repo-deploy-releases=$REPO_DEPLOY_RELEASES")
+        fi
+
+        if [[ -n "$REPO_DEPLOY_SNAPSHOTS" ]]; then
+          arguments+=("--repo-deploy-snapshots=$REPO_DEPLOY_SNAPSHOTS")
+        fi
+
+        if [[ -n "$REPO_RESOLVE_RELEASES" ]]; then
+          arguments+=("--repo-resolve-releases=$REPO_RESOLVE_RELEASES")
+        fi
+
+        if [[ -n "$REPO_RESOLVE_SNAPSHOTS" ]]; then
+          arguments+=("--repo-resolve-snapshots=$REPO_RESOLVE_SNAPSHOTS")
+        fi
+
+        if [[ -n "$SERVER_ID_DEPLOY" ]]; then
+          arguments+=("--server-id-deploy=$SERVER_ID_DEPLOY")
+        fi
+
+        if [[ -n "$SERVER_ID_RESOLVE" ]]; then
+          arguments+=("--server-id-resolve=$SERVER_ID_RESOLVE")
+        fi
+
+        if [[ -n "$SNAPSHOTS_UPDATE_POLICY" ]]; then
+          arguments+=("--snapshots-update-policy=$SNAPSHOTS_UPDATE_POLICY")
+        fi
+
+        if [[ "$USE_WRAPPER" == 'true' ]]; then
+          arguments+=('--use-wrapper')
+        fi
+
+        command='jf'
+        for argument in "${arguments[@]}"; do
+          printf -v escaped '%q' "$argument"
+          command+=" $escaped"
+        done
+
+        echo "Executing JFrog CLI Command:"
+        echo "$command"
+        echo "command=$command" >> "$GITHUB_OUTPUT"
+
+        if [[ "$IS_TEST" == 'false' ]]; then
+          jf "${arguments[@]}"
+        fi
+
+    - name: Run JFrog CLI command
+      id: run_pwsh
+      if: ${{ inputs.shell == 'powershell' || inputs.shell == 'pwsh' }}
+      shell: ${{ inputs.shell }}
+      env:
+        DISABLE_SNAPSHOTS: ${{ inputs.disable-snapshots }}
+        EXCLUDE_PATTERNS: ${{ inputs.exclude-patterns }}
+        GLOBAL: ${{ inputs.global }}
+        INCLUDE_PATTERNS: ${{ inputs.include-patterns }}
+        REPO_DEPLOY_RELEASES: ${{ inputs.repo-deploy-releases }}
+        REPO_DEPLOY_SNAPSHOTS: ${{ inputs.repo-deploy-snapshots }}
+        REPO_RESOLVE_RELEASES: ${{ inputs.repo-resolve-releases }}
+        REPO_RESOLVE_SNAPSHOTS: ${{ inputs.repo-resolve-snapshots }}
+        SERVER_ID_DEPLOY: ${{ inputs.server-id-deploy }}
+        SERVER_ID_RESOLVE: ${{ inputs.server-id-resolve }}
+        SNAPSHOTS_UPDATE_POLICY: ${{ inputs.snapshots-update-policy }}
+        USE_WRAPPER: ${{ inputs.use-wrapper }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        $arguments = @(
+          'mvn-config'
+        )
+
+        if ($env:DISABLE_SNAPSHOTS -eq 'true') {
+          $arguments += '--disable-snapshots'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:EXCLUDE_PATTERNS)) {
+          $arguments += "--exclude-patterns=$env:EXCLUDE_PATTERNS"
+        }
+
+        if ($env:GLOBAL -eq 'true') {
+          $arguments += '--global'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:INCLUDE_PATTERNS)) {
+          $arguments += "--include-patterns=$env:INCLUDE_PATTERNS"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:REPO_DEPLOY_RELEASES)) {
+          $arguments += "--repo-deploy-releases=$env:REPO_DEPLOY_RELEASES"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:REPO_DEPLOY_SNAPSHOTS)) {
+          $arguments += "--repo-deploy-snapshots=$env:REPO_DEPLOY_SNAPSHOTS"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:REPO_RESOLVE_RELEASES)) {
+          $arguments += "--repo-resolve-releases=$env:REPO_RESOLVE_RELEASES"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:REPO_RESOLVE_SNAPSHOTS)) {
+          $arguments += "--repo-resolve-snapshots=$env:REPO_RESOLVE_SNAPSHOTS"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SERVER_ID_DEPLOY)) {
+          $arguments += "--server-id-deploy=$env:SERVER_ID_DEPLOY"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SERVER_ID_RESOLVE)) {
+          $arguments += "--server-id-resolve=$env:SERVER_ID_RESOLVE"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SNAPSHOTS_UPDATE_POLICY)) {
+          $arguments += "--snapshots-update-policy=$env:SNAPSHOTS_UPDATE_POLICY"
+        }
+
+        if ($env:USE_WRAPPER -eq 'true') {
+          $arguments += '--use-wrapper'
+        }
+
+        $command = "jf $($arguments -join ' ')"
+        $delimiter = [guid]::NewGuid().ToString()
+
+        @(
+          "command<<$delimiter"
+          $command
+          $delimiter
+        ) >> $env:GITHUB_OUTPUT
+
+        if ($env:IS_TEST -eq 'false') {
+          & jf @arguments
+        }

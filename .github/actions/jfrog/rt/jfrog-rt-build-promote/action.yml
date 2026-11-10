@@ -1,0 +1,347 @@
+name: jfrog-rt-build-promote
+description: 'This command is used to promote build in Artifactory.'
+
+inputs:
+  build-name:
+    description: 'Build name.'
+    required: true
+    default: ''
+  build-number:
+    description: 'Build number.'
+    required: true
+    default: ''
+  target-repository:
+    description: 'Build promotion target repository.'
+    required: true
+    default: ''
+  format:
+    description: 'Defines the output format of the command. Acceptable values are: `json`.'
+    required: false
+    default: ''
+  access-token:
+    description: 'JFrog access token.'
+    required: false
+    default: ''
+  comment:
+    description: 'Build promotion comment.'
+    required: false
+    default: ''
+  copy:
+    description: 'If `true`, the build artifacts and dependencies are copied to the target repository, otherwise they are moved.'
+    required: false
+    default: 'false'
+  dry-run:
+    description: 'If `true`, promotion is only simulated. The build is not promoted.'
+    required: false
+    default: 'false'
+  fail-fast:
+    description: 'If `true`, fail and abort the operation upon receiving an error.'
+    required: false
+    default: 'false'
+  include-dependencies:
+    description: 'If `true`, the build dependencies are also promoted.'
+    required: false
+    default: 'false'
+  insecure-tls:
+    description: 'Set to `true` to skip TLS certificates verification.'
+    required: false
+    default: 'false'
+  password:
+    description: 'JFrog password.'
+    required: false
+    default: ''
+  project:
+    description: 'JFrog Artifactory project key.'
+    required: false
+    default: ''
+  props:
+    description: 'List of semicolon-separated (`;`) properties in the form of `key1=value1;key2=value2;...` to be attached to the build artifacts.'
+    required: false
+    default: ''
+  server-id:
+    description: 'Server ID configured using the `jf config` command.'
+    required: false
+    default: ''
+  source-repo:
+    description: 'Build promotion source repository.'
+    required: false
+    default: ''
+  ssh-key-path:
+    description: 'SSH key file path.'
+    required: false
+    default: ''
+  ssh-passphrase:
+    description: 'SSH key passphrase.'
+    required: false
+    default: ''
+  status:
+    description: 'Build promotion status.'
+    required: false
+    default: ''
+  url:
+    description: 'JFrog Platform URL. (example: `https://acme.jfrog.io`)'
+    required: false
+    default: ''
+  user:
+    description: 'JFrog username.'
+    required: false
+    default: ''
+  shell:
+    description: 'Shell to use for run steps. Acceptable values are: `bash`, `powershell`, `pwsh`.'
+    required: false
+    default: 'bash'
+  is-test:
+    description: 'Indicates if the action is tested.'
+    required: false
+    default: 'false'
+
+outputs:
+  command:
+    description: The JFrog command
+    value: ${{ steps.run_bash.outputs.command || steps.run_pwsh.outputs.command }}
+
+runs:
+  using: composite
+  steps:
+    - name: Run JFrog CLI command
+      id: run_bash
+      if: ${{ inputs.shell == 'bash' }}
+      shell: bash
+      env:
+        BUILD_NAME: ${{ inputs.build-name }}
+        BUILD_NUMBER: ${{ inputs.build-number }}
+        TARGET_REPOSITORY: ${{ inputs.target-repository }}
+        FORMAT: ${{ inputs.format }}
+        ACCESS_TOKEN: ${{ inputs.access-token }}
+        COMMENT: ${{ inputs.comment }}
+        COPY: ${{ inputs.copy }}
+        DRY_RUN: ${{ inputs.dry-run }}
+        FAIL_FAST: ${{ inputs.fail-fast }}
+        INCLUDE_DEPENDENCIES: ${{ inputs.include-dependencies }}
+        INSECURE_TLS: ${{ inputs.insecure-tls }}
+        PASSWORD: ${{ inputs.password }}
+        PROJECT: ${{ inputs.project }}
+        PROPS: ${{ inputs.props }}
+        SERVER_ID: ${{ inputs.server-id }}
+        SOURCE_REPO: ${{ inputs.source-repo }}
+        SSH_KEY_PATH: ${{ inputs.ssh-key-path }}
+        SSH_PASSPHRASE: ${{ inputs.ssh-passphrase }}
+        STATUS: ${{ inputs.status }}
+        URL: ${{ inputs.url }}
+        USER: ${{ inputs.user }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        arguments=(
+          'rt'
+          'build-promote'
+          "$BUILD_NAME"
+          "$BUILD_NUMBER"
+          "$TARGET_REPOSITORY"
+        )
+
+        if [[ -n "$FORMAT" ]]; then
+          arguments+=("--format=$FORMAT")
+        fi
+
+        if [[ -n "$ACCESS_TOKEN" ]]; then
+          arguments+=("--access-token=$ACCESS_TOKEN")
+        fi
+
+        if [[ -n "$COMMENT" ]]; then
+          arguments+=("--comment=$COMMENT")
+        fi
+
+        if [[ "$COPY" == 'true' ]]; then
+          arguments+=('--copy')
+        fi
+
+        if [[ "$DRY_RUN" == 'true' ]]; then
+          arguments+=('--dry-run')
+        fi
+
+        if [[ "$FAIL_FAST" == 'true' ]]; then
+          arguments+=('--fail-fast')
+        fi
+
+        if [[ "$INCLUDE_DEPENDENCIES" == 'true' ]]; then
+          arguments+=('--include-dependencies')
+        fi
+
+        if [[ "$INSECURE_TLS" == 'true' ]]; then
+          arguments+=('--insecure-tls')
+        fi
+
+        if [[ -n "$PASSWORD" ]]; then
+          arguments+=("--password=$PASSWORD")
+        fi
+
+        if [[ -n "$PROJECT" ]]; then
+          arguments+=("--project=$PROJECT")
+        fi
+
+        if [[ -n "$PROPS" ]]; then
+          arguments+=("--props=$PROPS")
+        fi
+
+        if [[ -n "$SERVER_ID" ]]; then
+          arguments+=("--server-id=$SERVER_ID")
+        fi
+
+        if [[ -n "$SOURCE_REPO" ]]; then
+          arguments+=("--source-repo=$SOURCE_REPO")
+        fi
+
+        if [[ -n "$SSH_KEY_PATH" ]]; then
+          arguments+=("--ssh-key-path=$SSH_KEY_PATH")
+        fi
+
+        if [[ -n "$SSH_PASSPHRASE" ]]; then
+          arguments+=("--ssh-passphrase=$SSH_PASSPHRASE")
+        fi
+
+        if [[ -n "$STATUS" ]]; then
+          arguments+=("--status=$STATUS")
+        fi
+
+        if [[ -n "$URL" ]]; then
+          arguments+=("--url=$URL")
+        fi
+
+        if [[ -n "$USER" ]]; then
+          arguments+=("--user=$USER")
+        fi
+
+        command='jf'
+        for argument in "${arguments[@]}"; do
+          printf -v escaped '%q' "$argument"
+          command+=" $escaped"
+        done
+
+        echo "Executing JFrog CLI Command:"
+        echo "$command"
+        echo "command=$command" >> "$GITHUB_OUTPUT"
+
+        if [[ "$IS_TEST" == 'false' ]]; then
+          jf "${arguments[@]}"
+        fi
+
+    - name: Run JFrog CLI command
+      id: run_pwsh
+      if: ${{ inputs.shell == 'powershell' || inputs.shell == 'pwsh' }}
+      shell: ${{ inputs.shell }}
+      env:
+        BUILD_NAME: ${{ inputs.build-name }}
+        BUILD_NUMBER: ${{ inputs.build-number }}
+        TARGET_REPOSITORY: ${{ inputs.target-repository }}
+        FORMAT: ${{ inputs.format }}
+        ACCESS_TOKEN: ${{ inputs.access-token }}
+        COMMENT: ${{ inputs.comment }}
+        COPY: ${{ inputs.copy }}
+        DRY_RUN: ${{ inputs.dry-run }}
+        FAIL_FAST: ${{ inputs.fail-fast }}
+        INCLUDE_DEPENDENCIES: ${{ inputs.include-dependencies }}
+        INSECURE_TLS: ${{ inputs.insecure-tls }}
+        PASSWORD: ${{ inputs.password }}
+        PROJECT: ${{ inputs.project }}
+        PROPS: ${{ inputs.props }}
+        SERVER_ID: ${{ inputs.server-id }}
+        SOURCE_REPO: ${{ inputs.source-repo }}
+        SSH_KEY_PATH: ${{ inputs.ssh-key-path }}
+        SSH_PASSPHRASE: ${{ inputs.ssh-passphrase }}
+        STATUS: ${{ inputs.status }}
+        URL: ${{ inputs.url }}
+        USER: ${{ inputs.user }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        $arguments = @(
+          'rt'
+          'build-promote'
+          "$env:BUILD_NAME"
+          "$env:BUILD_NUMBER"
+          "$env:TARGET_REPOSITORY"
+        )
+
+        if (-not [string]::IsNullOrWhiteSpace($env:FORMAT)) {
+          $arguments += "--format=$env:FORMAT"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:ACCESS_TOKEN)) {
+          $arguments += "--access-token=$env:ACCESS_TOKEN"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:COMMENT)) {
+          $arguments += "--comment=$env:COMMENT"
+        }
+
+        if ($env:COPY -eq 'true') {
+          $arguments += '--copy'
+        }
+
+        if ($env:DRY_RUN -eq 'true') {
+          $arguments += '--dry-run'
+        }
+
+        if ($env:FAIL_FAST -eq 'true') {
+          $arguments += '--fail-fast'
+        }
+
+        if ($env:INCLUDE_DEPENDENCIES -eq 'true') {
+          $arguments += '--include-dependencies'
+        }
+
+        if ($env:INSECURE_TLS -eq 'true') {
+          $arguments += '--insecure-tls'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:PASSWORD)) {
+          $arguments += "--password=$env:PASSWORD"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:PROJECT)) {
+          $arguments += "--project=$env:PROJECT"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:PROPS)) {
+          $arguments += "--props=$env:PROPS"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SERVER_ID)) {
+          $arguments += "--server-id=$env:SERVER_ID"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SOURCE_REPO)) {
+          $arguments += "--source-repo=$env:SOURCE_REPO"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SSH_KEY_PATH)) {
+          $arguments += "--ssh-key-path=$env:SSH_KEY_PATH"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SSH_PASSPHRASE)) {
+          $arguments += "--ssh-passphrase=$env:SSH_PASSPHRASE"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:STATUS)) {
+          $arguments += "--status=$env:STATUS"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:URL)) {
+          $arguments += "--url=$env:URL"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:USER)) {
+          $arguments += "--user=$env:USER"
+        }
+
+        $command = "jf $($arguments -join ' ')"
+        $delimiter = [guid]::NewGuid().ToString()
+
+        @(
+          "command<<$delimiter"
+          $command
+          $delimiter
+        ) >> $env:GITHUB_OUTPUT
+
+        if ($env:IS_TEST -eq 'false') {
+          & jf @arguments
+        }

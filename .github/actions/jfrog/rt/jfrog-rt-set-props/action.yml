@@ -1,0 +1,580 @@
+name: jfrog-rt-set-props
+description: 'Set properties on existing files in Artifactory.'
+
+inputs:
+  files-pattern:
+    description: 'Specifies the artifacts in Artifactory to apply properties to. Use `<repository>/<path>` format and wildcards (`*`, `?`) to match multiple artifacts.'
+    required: true
+    default: ''
+  file-properties:
+    description: 'List of semicolon-separated (`;`) key-value properties in the form of `key1=value1;key2=value2;...`. These properties will be applied to matching artifacts.'
+    required: true
+    default: ''
+  format:
+    description: 'Defines the output format of the command. Acceptable values are: `json`, `table`.'
+    required: false
+    default: ''
+  access-token:
+    description: 'JFrog access token.'
+    required: false
+    default: ''
+  archive-entries:
+    description: 'This option is no longer supported since version `7.90.5` of Artifactory. If specified, only archive artifacts containing entries matching this pattern are matched. You can use wildcards to specify multiple artifacts.'
+    required: false
+    default: ''
+  build:
+    description: 'If specified, only artifacts of the specified build are matched. The property format is `build-name/build-number`. If you do not specify the build number, the artifacts are filtered by the latest build number. If the build is assigned to a specific project please provide the project key using the `--project` flag.'
+    required: false
+    default: ''
+  bundle:
+    description: 'If specified, only artifacts of the specified bundle are matched. The value format is `bundle-name/bundle-version`.'
+    required: false
+    default: ''
+  client-cert-key-path:
+    description: 'Private key file for the client certificate in PEM format.'
+    required: false
+    default: ''
+  client-cert-path:
+    description: 'Client certificate file in PEM format.'
+    required: false
+    default: ''
+  exclude-artifacts:
+    description: 'If specified, build artifacts are not matched. Used together with the `--build` flag.'
+    required: false
+    default: ''
+  exclude-props:
+    description: 'List of semicolon-separated (`;`) properties in the form of `key1=value1;key2=value2;...`. Only artifacts without the specified properties are affected.'
+    required: false
+    default: ''
+  exclusions:
+    description: 'List of semicolon-separated (`;`) exclusions. Exclusions can include the `*` and the `?` wildcards.'
+    required: false
+    default: ''
+  fail-no-op:
+    description: 'Set to `true` if you''d like the command to return exit code 2 in case of no files are affected.'
+    required: false
+    default: 'false'
+  include-deps:
+    description: 'If specified, also dependencies of the specified build are matched. Used together with the `--build` flag.'
+    required: false
+    default: ''
+  include-dirs:
+    description: 'Set to `true` if you''d like to also apply the source path pattern for directories and not just for files.'
+    required: false
+    default: 'false'
+  insecure-tls:
+    description: 'Set to `true` to skip TLS certificates verification.'
+    required: false
+    default: 'false'
+  limit:
+    description: 'The maximum number of items to fetch. Usually used with the `sort-by` option.'
+    required: false
+    default: ''
+  offset:
+    description: 'The offset from which to fetch items (i.e. how many items should be skipped). Usually used with the `sort-by` option.'
+    required: false
+    default: ''
+  password:
+    description: 'JFrog password.'
+    required: false
+    default: ''
+  project:
+    description: 'JFrog Artifactory project key.'
+    required: false
+    default: ''
+  props:
+    description: 'List of semicolon-separated (`;`) properties in the form of `key1=value1;key2=value2;...`. Only artifacts with these properties are affected.'
+    required: false
+    default: ''
+  recursive:
+    description: 'When `false`, artifacts inside sub-folders in Artifactory will not be affected.'
+    required: false
+    default: 'false'
+  repo-only:
+    description: 'When `true`, properties will be applicable only on repository level.'
+    required: false
+    default: 'false'
+  retries:
+    description: 'Number of HTTP retries.'
+    required: false
+    default: ''
+  retry-wait-time:
+    description: 'Number of seconds or milliseconds to wait between retries. The numeric value should either end with s for seconds or ms for milliseconds (for example: `10s` or `100ms`).'
+    required: false
+    default: ''
+  server-id:
+    description: 'Server ID configured using the `jf config` command.'
+    required: false
+    default: ''
+  sort-by:
+    description: 'List of semicolon-separated (`;`) fields to sort by. The fields must be part of the `items` AQL domain.'
+    required: false
+    default: ''
+  sort-order:
+    description: 'The order by which fields in the `sort-by` option should be sorted. Accepts `asc` or `desc`.'
+    required: false
+    default: ''
+  spec:
+    description: 'Path to a File Spec.'
+    required: false
+    default: ''
+  spec-json:
+    description: 'Spec as JSON.'
+    required: false
+    default: ''
+  spec-vars:
+    description: 'List of semicolon-separated (`;`) variables in the form of `key1=value1;key2=value2;...` (wrapped by quotes) to be replaced in the File Spec. In the File Spec, the variables should be used as follows: `${key1}`.'
+    required: false
+    default: ''
+  ssh-key-path:
+    description: 'SSH key file path.'
+    required: false
+    default: ''
+  ssh-passphrase:
+    description: 'SSH key passphrase.'
+    required: false
+    default: ''
+  threads:
+    description: 'Number of working threads.'
+    required: false
+    default: ''
+  url:
+    description: 'JFrog Platform URL. (example: `https://acme.jfrog.io`)'
+    required: false
+    default: ''
+  user:
+    description: 'JFrog username.'
+    required: false
+    default: ''
+  shell:
+    description: 'Shell to use for run steps. Acceptable values are: `bash`, `powershell`, `pwsh`.'
+    required: false
+    default: 'bash'
+  is-test:
+    description: 'Indicates if the action is tested.'
+    required: false
+    default: 'false'
+
+outputs:
+  command:
+    description: The JFrog command
+    value: ${{ steps.run_bash.outputs.command || steps.run_pwsh.outputs.command }}
+
+runs:
+  using: composite
+  steps:
+    - name: Run JFrog CLI command
+      id: run_bash
+      if: ${{ inputs.shell == 'bash' }}
+      shell: bash
+      env:
+        FILES_PATTERN: ${{ inputs.files-pattern }}
+        FILE_PROPERTIES: ${{ inputs.file-properties }}
+        FORMAT: ${{ inputs.format }}
+        ACCESS_TOKEN: ${{ inputs.access-token }}
+        ARCHIVE_ENTRIES: ${{ inputs.archive-entries }}
+        BUILD: ${{ inputs.build }}
+        BUNDLE: ${{ inputs.bundle }}
+        CLIENT_CERT_KEY_PATH: ${{ inputs.client-cert-key-path }}
+        CLIENT_CERT_PATH: ${{ inputs.client-cert-path }}
+        EXCLUDE_ARTIFACTS: ${{ inputs.exclude-artifacts }}
+        EXCLUDE_PROPS: ${{ inputs.exclude-props }}
+        EXCLUSIONS: ${{ inputs.exclusions }}
+        FAIL_NO_OP: ${{ inputs.fail-no-op }}
+        INCLUDE_DEPS: ${{ inputs.include-deps }}
+        INCLUDE_DIRS: ${{ inputs.include-dirs }}
+        INSECURE_TLS: ${{ inputs.insecure-tls }}
+        LIMIT: ${{ inputs.limit }}
+        OFFSET: ${{ inputs.offset }}
+        PASSWORD: ${{ inputs.password }}
+        PROJECT: ${{ inputs.project }}
+        PROPS: ${{ inputs.props }}
+        RECURSIVE: ${{ inputs.recursive }}
+        REPO_ONLY: ${{ inputs.repo-only }}
+        RETRIES: ${{ inputs.retries }}
+        RETRY_WAIT_TIME: ${{ inputs.retry-wait-time }}
+        SERVER_ID: ${{ inputs.server-id }}
+        SORT_BY: ${{ inputs.sort-by }}
+        SORT_ORDER: ${{ inputs.sort-order }}
+        SPEC: ${{ inputs.spec }}
+        SPEC_JSON: ${{ inputs.spec-json }}
+        SPEC_VARS: ${{ inputs.spec-vars }}
+        SSH_KEY_PATH: ${{ inputs.ssh-key-path }}
+        SSH_PASSPHRASE: ${{ inputs.ssh-passphrase }}
+        THREADS: ${{ inputs.threads }}
+        URL: ${{ inputs.url }}
+        USER: ${{ inputs.user }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        arguments=(
+          'rt'
+          'set-props'
+          "$FILES_PATTERN"
+          "$FILE_PROPERTIES"
+        )
+
+        if [[ -n "$FORMAT" ]]; then
+          arguments+=("--format=$FORMAT")
+        fi
+
+        if [[ -n "$ACCESS_TOKEN" ]]; then
+          arguments+=("--access-token=$ACCESS_TOKEN")
+        fi
+
+        if [[ -n "$ARCHIVE_ENTRIES" ]]; then
+          arguments+=("--archive-entries=$ARCHIVE_ENTRIES")
+        fi
+
+        if [[ -n "$BUILD" ]]; then
+          arguments+=("--build=$BUILD")
+        fi
+
+        if [[ -n "$BUNDLE" ]]; then
+          arguments+=("--bundle=$BUNDLE")
+        fi
+
+        if [[ -n "$CLIENT_CERT_KEY_PATH" ]]; then
+          arguments+=("--client-cert-key-path=$CLIENT_CERT_KEY_PATH")
+        fi
+
+        if [[ -n "$CLIENT_CERT_PATH" ]]; then
+          arguments+=("--client-cert-path=$CLIENT_CERT_PATH")
+        fi
+
+        if [[ -n "$EXCLUDE_ARTIFACTS" ]]; then
+          arguments+=("--exclude-artifacts=$EXCLUDE_ARTIFACTS")
+        fi
+
+        if [[ -n "$EXCLUDE_PROPS" ]]; then
+          arguments+=("--exclude-props=$EXCLUDE_PROPS")
+        fi
+
+        if [[ -n "$EXCLUSIONS" ]]; then
+          arguments+=("--exclusions=$EXCLUSIONS")
+        fi
+
+        if [[ "$FAIL_NO_OP" == 'true' ]]; then
+          arguments+=('--fail-no-op')
+        fi
+
+        if [[ -n "$INCLUDE_DEPS" ]]; then
+          arguments+=("--include-deps=$INCLUDE_DEPS")
+        fi
+
+        if [[ "$INCLUDE_DIRS" == 'true' ]]; then
+          arguments+=('--include-dirs')
+        fi
+
+        if [[ "$INSECURE_TLS" == 'true' ]]; then
+          arguments+=('--insecure-tls')
+        fi
+
+        if [[ -n "$LIMIT" ]]; then
+          arguments+=("--limit=$LIMIT")
+        fi
+
+        if [[ -n "$OFFSET" ]]; then
+          arguments+=("--offset=$OFFSET")
+        fi
+
+        if [[ -n "$PASSWORD" ]]; then
+          arguments+=("--password=$PASSWORD")
+        fi
+
+        if [[ -n "$PROJECT" ]]; then
+          arguments+=("--project=$PROJECT")
+        fi
+
+        if [[ -n "$PROPS" ]]; then
+          arguments+=("--props=$PROPS")
+        fi
+
+        if [[ "$RECURSIVE" == 'true' ]]; then
+          arguments+=('--recursive')
+        fi
+
+        if [[ "$REPO_ONLY" == 'true' ]]; then
+          arguments+=('--repo-only')
+        fi
+
+        if [[ -n "$RETRIES" ]]; then
+          arguments+=("--retries=$RETRIES")
+        fi
+
+        if [[ -n "$RETRY_WAIT_TIME" ]]; then
+          arguments+=("--retry-wait-time=$RETRY_WAIT_TIME")
+        fi
+
+        if [[ -n "$SERVER_ID" ]]; then
+          arguments+=("--server-id=$SERVER_ID")
+        fi
+
+        if [[ -n "$SORT_BY" ]]; then
+          arguments+=("--sort-by=$SORT_BY")
+        fi
+
+        if [[ -n "$SORT_ORDER" ]]; then
+          arguments+=("--sort-order=$SORT_ORDER")
+        fi
+
+        if [[ -n "$SPEC" ]]; then
+          arguments+=("--spec=$SPEC")
+        elif [[ -n "$SPEC_JSON" ]]; then
+          specFileName="spec.json"
+
+          echo "Writing $specFileName file with the content"
+          echo
+          printf '%s\n' "$SPEC_JSON"
+          echo
+
+          printf '%s' "$SPEC_JSON" > "$specFileName"
+          arguments+=("--spec=$specFileName")
+        fi
+
+        if [[ -n "$SPEC_VARS" ]]; then
+          arguments+=("--spec-vars=$SPEC_VARS")
+        fi
+
+        if [[ -n "$SSH_KEY_PATH" ]]; then
+          arguments+=("--ssh-key-path=$SSH_KEY_PATH")
+        fi
+
+        if [[ -n "$SSH_PASSPHRASE" ]]; then
+          arguments+=("--ssh-passphrase=$SSH_PASSPHRASE")
+        fi
+
+        if [[ -n "$THREADS" ]]; then
+          arguments+=("--threads=$THREADS")
+        fi
+
+        if [[ -n "$URL" ]]; then
+          arguments+=("--url=$URL")
+        fi
+
+        if [[ -n "$USER" ]]; then
+          arguments+=("--user=$USER")
+        fi
+
+        command='jf'
+        for argument in "${arguments[@]}"; do
+          printf -v escaped '%q' "$argument"
+          command+=" $escaped"
+        done
+
+        echo "Executing JFrog CLI Command:"
+        echo "$command"
+        echo "command=$command" >> "$GITHUB_OUTPUT"
+
+        if [[ "$IS_TEST" == 'false' ]]; then
+          jf "${arguments[@]}"
+        fi
+
+    - name: Run JFrog CLI command
+      id: run_pwsh
+      if: ${{ inputs.shell == 'powershell' || inputs.shell == 'pwsh' }}
+      shell: ${{ inputs.shell }}
+      env:
+        FILES_PATTERN: ${{ inputs.files-pattern }}
+        FILE_PROPERTIES: ${{ inputs.file-properties }}
+        FORMAT: ${{ inputs.format }}
+        ACCESS_TOKEN: ${{ inputs.access-token }}
+        ARCHIVE_ENTRIES: ${{ inputs.archive-entries }}
+        BUILD: ${{ inputs.build }}
+        BUNDLE: ${{ inputs.bundle }}
+        CLIENT_CERT_KEY_PATH: ${{ inputs.client-cert-key-path }}
+        CLIENT_CERT_PATH: ${{ inputs.client-cert-path }}
+        EXCLUDE_ARTIFACTS: ${{ inputs.exclude-artifacts }}
+        EXCLUDE_PROPS: ${{ inputs.exclude-props }}
+        EXCLUSIONS: ${{ inputs.exclusions }}
+        FAIL_NO_OP: ${{ inputs.fail-no-op }}
+        INCLUDE_DEPS: ${{ inputs.include-deps }}
+        INCLUDE_DIRS: ${{ inputs.include-dirs }}
+        INSECURE_TLS: ${{ inputs.insecure-tls }}
+        LIMIT: ${{ inputs.limit }}
+        OFFSET: ${{ inputs.offset }}
+        PASSWORD: ${{ inputs.password }}
+        PROJECT: ${{ inputs.project }}
+        PROPS: ${{ inputs.props }}
+        RECURSIVE: ${{ inputs.recursive }}
+        REPO_ONLY: ${{ inputs.repo-only }}
+        RETRIES: ${{ inputs.retries }}
+        RETRY_WAIT_TIME: ${{ inputs.retry-wait-time }}
+        SERVER_ID: ${{ inputs.server-id }}
+        SORT_BY: ${{ inputs.sort-by }}
+        SORT_ORDER: ${{ inputs.sort-order }}
+        SPEC: ${{ inputs.spec }}
+        SPEC_JSON: ${{ inputs.spec-json }}
+        SPEC_VARS: ${{ inputs.spec-vars }}
+        SSH_KEY_PATH: ${{ inputs.ssh-key-path }}
+        SSH_PASSPHRASE: ${{ inputs.ssh-passphrase }}
+        THREADS: ${{ inputs.threads }}
+        URL: ${{ inputs.url }}
+        USER: ${{ inputs.user }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        $arguments = @(
+          'rt'
+          'set-props'
+          "$env:FILES_PATTERN"
+          "$env:FILE_PROPERTIES"
+        )
+
+        if (-not [string]::IsNullOrWhiteSpace($env:FORMAT)) {
+          $arguments += "--format=$env:FORMAT"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:ACCESS_TOKEN)) {
+          $arguments += "--access-token=$env:ACCESS_TOKEN"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:ARCHIVE_ENTRIES)) {
+          $arguments += "--archive-entries=$env:ARCHIVE_ENTRIES"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:BUILD)) {
+          $arguments += "--build=$env:BUILD"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:BUNDLE)) {
+          $arguments += "--bundle=$env:BUNDLE"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:CLIENT_CERT_KEY_PATH)) {
+          $arguments += "--client-cert-key-path=$env:CLIENT_CERT_KEY_PATH"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:CLIENT_CERT_PATH)) {
+          $arguments += "--client-cert-path=$env:CLIENT_CERT_PATH"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:EXCLUDE_ARTIFACTS)) {
+          $arguments += "--exclude-artifacts=$env:EXCLUDE_ARTIFACTS"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:EXCLUDE_PROPS)) {
+          $arguments += "--exclude-props=$env:EXCLUDE_PROPS"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:EXCLUSIONS)) {
+          $arguments += "--exclusions=$env:EXCLUSIONS"
+        }
+
+        if ($env:FAIL_NO_OP -eq 'true') {
+          $arguments += '--fail-no-op'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:INCLUDE_DEPS)) {
+          $arguments += "--include-deps=$env:INCLUDE_DEPS"
+        }
+
+        if ($env:INCLUDE_DIRS -eq 'true') {
+          $arguments += '--include-dirs'
+        }
+
+        if ($env:INSECURE_TLS -eq 'true') {
+          $arguments += '--insecure-tls'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:LIMIT)) {
+          $arguments += "--limit=$env:LIMIT"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:OFFSET)) {
+          $arguments += "--offset=$env:OFFSET"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:PASSWORD)) {
+          $arguments += "--password=$env:PASSWORD"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:PROJECT)) {
+          $arguments += "--project=$env:PROJECT"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:PROPS)) {
+          $arguments += "--props=$env:PROPS"
+        }
+
+        if ($env:RECURSIVE -eq 'true') {
+          $arguments += '--recursive'
+        }
+
+        if ($env:REPO_ONLY -eq 'true') {
+          $arguments += '--repo-only'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:RETRIES)) {
+          $arguments += "--retries=$env:RETRIES"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:RETRY_WAIT_TIME)) {
+          $arguments += "--retry-wait-time=$env:RETRY_WAIT_TIME"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SERVER_ID)) {
+          $arguments += "--server-id=$env:SERVER_ID"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SORT_BY)) {
+          $arguments += "--sort-by=$env:SORT_BY"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SORT_ORDER)) {
+          $arguments += "--sort-order=$env:SORT_ORDER"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SPEC)) {
+          $arguments += "--spec=$env:SPEC"
+        }
+        elseif (-not [string]::IsNullOrWhiteSpace($env:SPEC_JSON)) {
+          $specFileName = "spec.json"
+
+          Write-Host "Writing $specFileName file with the content"
+          Write-Host ""
+          Write-Host $env:SPEC_JSON
+          Write-Host ""
+
+          [System.IO.File]::WriteAllText(
+            $specFileName,
+            $env:SPEC_JSON,
+            [System.Text.UTF8Encoding]::new($false))
+
+          $arguments += "--spec=$specFileName"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SPEC_VARS)) {
+          $arguments += "--spec-vars=$env:SPEC_VARS"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SSH_KEY_PATH)) {
+          $arguments += "--ssh-key-path=$env:SSH_KEY_PATH"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SSH_PASSPHRASE)) {
+          $arguments += "--ssh-passphrase=$env:SSH_PASSPHRASE"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:THREADS)) {
+          $arguments += "--threads=$env:THREADS"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:URL)) {
+          $arguments += "--url=$env:URL"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:USER)) {
+          $arguments += "--user=$env:USER"
+        }
+
+        $command = "jf $($arguments -join ' ')"
+        $delimiter = [guid]::NewGuid().ToString()
+
+        @(
+          "command<<$delimiter"
+          $command
+          $delimiter
+        ) >> $env:GITHUB_OUTPUT
+
+        if ($env:IS_TEST -eq 'false') {
+          & jf @arguments
+        }

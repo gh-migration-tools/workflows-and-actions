@@ -1,0 +1,269 @@
+name: jfrog-rt-podman-pull
+description: 'Podman pull.'
+
+inputs:
+  image-tag:
+    description: 'Docker image tag to pull.'
+    required: true
+    default: ''
+  source-repo:
+    description: 'Source repository in Artifactory.'
+    required: true
+    default: ''
+  format:
+    description: 'Defines the output format of the command. Acceptable values are: `json`, `table`.'
+    required: false
+    default: ''
+  access-token:
+    description: 'JFrog access token.'
+    required: false
+    default: ''
+  build-name:
+    description: 'Providing this option will collect and record build info for this build name. Build number option is mandatory when this option is provided.'
+    required: false
+    default: ''
+  build-number:
+    description: 'Providing this option will collect and record build info for this build number. Build name option is mandatory when this option is provided.'
+    required: false
+    default: ''
+  module:
+    description: 'Optional module name for the build info. Build name and number options are mandatory when this option is provided.'
+    required: false
+    default: ''
+  password:
+    description: 'JFrog password.'
+    required: false
+    default: ''
+  project:
+    description: 'JFrog Artifactory project key.'
+    required: false
+    default: ''
+  server-id:
+    description: 'Server ID configured using the `jf config` command.'
+    required: false
+    default: ''
+  skip-login:
+    description: 'Set to `true` if you''d like the command to skip performing `docker login`.'
+    required: false
+    default: 'false'
+  ssh-key-path:
+    description: 'SSH key file path.'
+    required: false
+    default: ''
+  ssh-passphrase:
+    description: 'SSH key passphrase.'
+    required: false
+    default: ''
+  url:
+    description: 'JFrog Platform URL. (example: `https://acme.jfrog.io`)'
+    required: false
+    default: ''
+  user:
+    description: 'JFrog username.'
+    required: false
+    default: ''
+  shell:
+    description: 'Shell to use for run steps. Acceptable values are: `bash`, `powershell`, `pwsh`.'
+    required: false
+    default: 'bash'
+  is-test:
+    description: 'Indicates if the action is tested.'
+    required: false
+    default: 'false'
+
+outputs:
+  command:
+    description: The JFrog command
+    value: ${{ steps.run_bash.outputs.command || steps.run_pwsh.outputs.command }}
+
+runs:
+  using: composite
+  steps:
+    - name: Run JFrog CLI command
+      id: run_bash
+      if: ${{ inputs.shell == 'bash' }}
+      shell: bash
+      env:
+        IMAGE_TAG: ${{ inputs.image-tag }}
+        SOURCE_REPO: ${{ inputs.source-repo }}
+        FORMAT: ${{ inputs.format }}
+        ACCESS_TOKEN: ${{ inputs.access-token }}
+        BUILD_NAME: ${{ inputs.build-name }}
+        BUILD_NUMBER: ${{ inputs.build-number }}
+        MODULE: ${{ inputs.module }}
+        PASSWORD: ${{ inputs.password }}
+        PROJECT: ${{ inputs.project }}
+        SERVER_ID: ${{ inputs.server-id }}
+        SKIP_LOGIN: ${{ inputs.skip-login }}
+        SSH_KEY_PATH: ${{ inputs.ssh-key-path }}
+        SSH_PASSPHRASE: ${{ inputs.ssh-passphrase }}
+        URL: ${{ inputs.url }}
+        USER: ${{ inputs.user }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        arguments=(
+          'rt'
+          'podman-pull'
+          "$IMAGE_TAG"
+          "$SOURCE_REPO"
+        )
+
+        if [[ -n "$FORMAT" ]]; then
+          arguments+=("--format=$FORMAT")
+        fi
+
+        if [[ -n "$ACCESS_TOKEN" ]]; then
+          arguments+=("--access-token=$ACCESS_TOKEN")
+        fi
+
+        if [[ -n "$BUILD_NAME" ]]; then
+          arguments+=("--build-name=$BUILD_NAME")
+        fi
+
+        if [[ -n "$BUILD_NUMBER" ]]; then
+          arguments+=("--build-number=$BUILD_NUMBER")
+        fi
+
+        if [[ -n "$MODULE" ]]; then
+          arguments+=("--module=$MODULE")
+        fi
+
+        if [[ -n "$PASSWORD" ]]; then
+          arguments+=("--password=$PASSWORD")
+        fi
+
+        if [[ -n "$PROJECT" ]]; then
+          arguments+=("--project=$PROJECT")
+        fi
+
+        if [[ -n "$SERVER_ID" ]]; then
+          arguments+=("--server-id=$SERVER_ID")
+        fi
+
+        if [[ "$SKIP_LOGIN" == 'true' ]]; then
+          arguments+=('--skip-login')
+        fi
+
+        if [[ -n "$SSH_KEY_PATH" ]]; then
+          arguments+=("--ssh-key-path=$SSH_KEY_PATH")
+        fi
+
+        if [[ -n "$SSH_PASSPHRASE" ]]; then
+          arguments+=("--ssh-passphrase=$SSH_PASSPHRASE")
+        fi
+
+        if [[ -n "$URL" ]]; then
+          arguments+=("--url=$URL")
+        fi
+
+        if [[ -n "$USER" ]]; then
+          arguments+=("--user=$USER")
+        fi
+
+        command='jf'
+        for argument in "${arguments[@]}"; do
+          printf -v escaped '%q' "$argument"
+          command+=" $escaped"
+        done
+
+        echo "Executing JFrog CLI Command:"
+        echo "$command"
+        echo "command=$command" >> "$GITHUB_OUTPUT"
+
+        if [[ "$IS_TEST" == 'false' ]]; then
+          jf "${arguments[@]}"
+        fi
+
+    - name: Run JFrog CLI command
+      id: run_pwsh
+      if: ${{ inputs.shell == 'powershell' || inputs.shell == 'pwsh' }}
+      shell: ${{ inputs.shell }}
+      env:
+        IMAGE_TAG: ${{ inputs.image-tag }}
+        SOURCE_REPO: ${{ inputs.source-repo }}
+        FORMAT: ${{ inputs.format }}
+        ACCESS_TOKEN: ${{ inputs.access-token }}
+        BUILD_NAME: ${{ inputs.build-name }}
+        BUILD_NUMBER: ${{ inputs.build-number }}
+        MODULE: ${{ inputs.module }}
+        PASSWORD: ${{ inputs.password }}
+        PROJECT: ${{ inputs.project }}
+        SERVER_ID: ${{ inputs.server-id }}
+        SKIP_LOGIN: ${{ inputs.skip-login }}
+        SSH_KEY_PATH: ${{ inputs.ssh-key-path }}
+        SSH_PASSPHRASE: ${{ inputs.ssh-passphrase }}
+        URL: ${{ inputs.url }}
+        USER: ${{ inputs.user }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        $arguments = @(
+          'rt'
+          'podman-pull'
+          "$env:IMAGE_TAG"
+          "$env:SOURCE_REPO"
+        )
+
+        if (-not [string]::IsNullOrWhiteSpace($env:FORMAT)) {
+          $arguments += "--format=$env:FORMAT"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:ACCESS_TOKEN)) {
+          $arguments += "--access-token=$env:ACCESS_TOKEN"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:BUILD_NAME)) {
+          $arguments += "--build-name=$env:BUILD_NAME"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:BUILD_NUMBER)) {
+          $arguments += "--build-number=$env:BUILD_NUMBER"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:MODULE)) {
+          $arguments += "--module=$env:MODULE"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:PASSWORD)) {
+          $arguments += "--password=$env:PASSWORD"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:PROJECT)) {
+          $arguments += "--project=$env:PROJECT"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SERVER_ID)) {
+          $arguments += "--server-id=$env:SERVER_ID"
+        }
+
+        if ($env:SKIP_LOGIN -eq 'true') {
+          $arguments += '--skip-login'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SSH_KEY_PATH)) {
+          $arguments += "--ssh-key-path=$env:SSH_KEY_PATH"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SSH_PASSPHRASE)) {
+          $arguments += "--ssh-passphrase=$env:SSH_PASSPHRASE"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:URL)) {
+          $arguments += "--url=$env:URL"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:USER)) {
+          $arguments += "--user=$env:USER"
+        }
+
+        $command = "jf $($arguments -join ' ')"
+        $delimiter = [guid]::NewGuid().ToString()
+
+        @(
+          "command<<$delimiter"
+          $command
+          $delimiter
+        ) >> $env:GITHUB_OUTPUT
+
+        if ($env:IS_TEST -eq 'false') {
+          & jf @arguments
+        }

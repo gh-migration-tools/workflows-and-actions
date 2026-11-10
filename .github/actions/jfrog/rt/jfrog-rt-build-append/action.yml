@@ -1,0 +1,285 @@
+name: jfrog-rt-build-append
+description: 'Append published build to the build info.'
+
+inputs:
+  build-name:
+    description: 'The current build name.'
+    required: true
+    default: ''
+  build-number:
+    description: 'The current build number.'
+    required: true
+    default: ''
+  build-name-to-append:
+    description: 'The published build name to append to the current build.'
+    required: true
+    default: ''
+  build-number-to-append:
+    description: 'The published build number to append to the current build.'
+    required: true
+    default: ''
+  access-token:
+    description: 'JFrog access token.'
+    required: false
+    default: ''
+  build-url:
+    description: 'Can be used for setting the CI server build URL in the build info.'
+    required: false
+    default: ''
+  dry-run:
+    description: 'Set to `true` to get a preview of the recorded build info, without publishing it to Artifactory.'
+    required: false
+    default: 'false'
+  env-exclude:
+    description: 'List of case insensitive patterns in the form of `value1;value2;...`. Environment variables match those patterns will be excluded.'
+    required: false
+    default: ''
+  env-include:
+    description: 'List of patterns in the form of `value1;value2;...`. Only environment variables match those patterns will be included.'
+    required: false
+    default: ''
+  insecure-tls:
+    description: 'Set to `true` to skip TLS certificates verification.'
+    required: false
+    default: 'false'
+  password:
+    description: 'JFrog password.'
+    required: false
+    default: ''
+  project:
+    description: 'JFrog Artifactory project key.'
+    required: false
+    default: ''
+  server-id:
+    description: 'Server ID configured using the `jf config` command.'
+    required: false
+    default: ''
+  ssh-key-path:
+    description: 'SSH key file path.'
+    required: false
+    default: ''
+  ssh-passphrase:
+    description: 'SSH key passphrase.'
+    required: false
+    default: ''
+  url:
+    description: 'JFrog Platform URL. (example: `https://acme.jfrog.io`)'
+    required: false
+    default: ''
+  user:
+    description: 'JFrog username.'
+    required: false
+    default: ''
+  shell:
+    description: 'Shell to use for run steps. Acceptable values are: `bash`, `powershell`, `pwsh`.'
+    required: false
+    default: 'bash'
+  is-test:
+    description: 'Indicates if the action is tested.'
+    required: false
+    default: 'false'
+
+outputs:
+  command:
+    description: The JFrog command
+    value: ${{ steps.run_bash.outputs.command || steps.run_pwsh.outputs.command }}
+
+runs:
+  using: composite
+  steps:
+    - name: Run JFrog CLI command
+      id: run_bash
+      if: ${{ inputs.shell == 'bash' }}
+      shell: bash
+      env:
+        BUILD_NAME: ${{ inputs.build-name }}
+        BUILD_NUMBER: ${{ inputs.build-number }}
+        BUILD_NAME_TO_APPEND: ${{ inputs.build-name-to-append }}
+        BUILD_NUMBER_TO_APPEND: ${{ inputs.build-number-to-append }}
+        ACCESS_TOKEN: ${{ inputs.access-token }}
+        BUILD_URL: ${{ inputs.build-url }}
+        DRY_RUN: ${{ inputs.dry-run }}
+        ENV_EXCLUDE: ${{ inputs.env-exclude }}
+        ENV_INCLUDE: ${{ inputs.env-include }}
+        INSECURE_TLS: ${{ inputs.insecure-tls }}
+        PASSWORD: ${{ inputs.password }}
+        PROJECT: ${{ inputs.project }}
+        SERVER_ID: ${{ inputs.server-id }}
+        SSH_KEY_PATH: ${{ inputs.ssh-key-path }}
+        SSH_PASSPHRASE: ${{ inputs.ssh-passphrase }}
+        URL: ${{ inputs.url }}
+        USER: ${{ inputs.user }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        arguments=(
+          'rt'
+          'build-append'
+          "$BUILD_NAME"
+          "$BUILD_NUMBER"
+          "$BUILD_NAME_TO_APPEND"
+          "$BUILD_NUMBER_TO_APPEND"
+        )
+
+        if [[ -n "$ACCESS_TOKEN" ]]; then
+          arguments+=("--access-token=$ACCESS_TOKEN")
+        fi
+
+        if [[ -n "$BUILD_URL" ]]; then
+          arguments+=("--build-url=$BUILD_URL")
+        fi
+
+        if [[ "$DRY_RUN" == 'true' ]]; then
+          arguments+=('--dry-run')
+        fi
+
+        if [[ -n "$ENV_EXCLUDE" ]]; then
+          arguments+=("--env-exclude=$ENV_EXCLUDE")
+        fi
+
+        if [[ -n "$ENV_INCLUDE" ]]; then
+          arguments+=("--env-include=$ENV_INCLUDE")
+        fi
+
+        if [[ "$INSECURE_TLS" == 'true' ]]; then
+          arguments+=('--insecure-tls')
+        fi
+
+        if [[ -n "$PASSWORD" ]]; then
+          arguments+=("--password=$PASSWORD")
+        fi
+
+        if [[ -n "$PROJECT" ]]; then
+          arguments+=("--project=$PROJECT")
+        fi
+
+        if [[ -n "$SERVER_ID" ]]; then
+          arguments+=("--server-id=$SERVER_ID")
+        fi
+
+        if [[ -n "$SSH_KEY_PATH" ]]; then
+          arguments+=("--ssh-key-path=$SSH_KEY_PATH")
+        fi
+
+        if [[ -n "$SSH_PASSPHRASE" ]]; then
+          arguments+=("--ssh-passphrase=$SSH_PASSPHRASE")
+        fi
+
+        if [[ -n "$URL" ]]; then
+          arguments+=("--url=$URL")
+        fi
+
+        if [[ -n "$USER" ]]; then
+          arguments+=("--user=$USER")
+        fi
+
+        command='jf'
+        for argument in "${arguments[@]}"; do
+          printf -v escaped '%q' "$argument"
+          command+=" $escaped"
+        done
+
+        echo "Executing JFrog CLI Command:"
+        echo "$command"
+        echo "command=$command" >> "$GITHUB_OUTPUT"
+
+        if [[ "$IS_TEST" == 'false' ]]; then
+          jf "${arguments[@]}"
+        fi
+
+    - name: Run JFrog CLI command
+      id: run_pwsh
+      if: ${{ inputs.shell == 'powershell' || inputs.shell == 'pwsh' }}
+      shell: ${{ inputs.shell }}
+      env:
+        BUILD_NAME: ${{ inputs.build-name }}
+        BUILD_NUMBER: ${{ inputs.build-number }}
+        BUILD_NAME_TO_APPEND: ${{ inputs.build-name-to-append }}
+        BUILD_NUMBER_TO_APPEND: ${{ inputs.build-number-to-append }}
+        ACCESS_TOKEN: ${{ inputs.access-token }}
+        BUILD_URL: ${{ inputs.build-url }}
+        DRY_RUN: ${{ inputs.dry-run }}
+        ENV_EXCLUDE: ${{ inputs.env-exclude }}
+        ENV_INCLUDE: ${{ inputs.env-include }}
+        INSECURE_TLS: ${{ inputs.insecure-tls }}
+        PASSWORD: ${{ inputs.password }}
+        PROJECT: ${{ inputs.project }}
+        SERVER_ID: ${{ inputs.server-id }}
+        SSH_KEY_PATH: ${{ inputs.ssh-key-path }}
+        SSH_PASSPHRASE: ${{ inputs.ssh-passphrase }}
+        URL: ${{ inputs.url }}
+        USER: ${{ inputs.user }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        $arguments = @(
+          'rt'
+          'build-append'
+          "$env:BUILD_NAME"
+          "$env:BUILD_NUMBER"
+          "$env:BUILD_NAME_TO_APPEND"
+          "$env:BUILD_NUMBER_TO_APPEND"
+        )
+
+        if (-not [string]::IsNullOrWhiteSpace($env:ACCESS_TOKEN)) {
+          $arguments += "--access-token=$env:ACCESS_TOKEN"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:BUILD_URL)) {
+          $arguments += "--build-url=$env:BUILD_URL"
+        }
+
+        if ($env:DRY_RUN -eq 'true') {
+          $arguments += '--dry-run'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:ENV_EXCLUDE)) {
+          $arguments += "--env-exclude=$env:ENV_EXCLUDE"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:ENV_INCLUDE)) {
+          $arguments += "--env-include=$env:ENV_INCLUDE"
+        }
+
+        if ($env:INSECURE_TLS -eq 'true') {
+          $arguments += '--insecure-tls'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:PASSWORD)) {
+          $arguments += "--password=$env:PASSWORD"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:PROJECT)) {
+          $arguments += "--project=$env:PROJECT"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SERVER_ID)) {
+          $arguments += "--server-id=$env:SERVER_ID"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SSH_KEY_PATH)) {
+          $arguments += "--ssh-key-path=$env:SSH_KEY_PATH"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SSH_PASSPHRASE)) {
+          $arguments += "--ssh-passphrase=$env:SSH_PASSPHRASE"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:URL)) {
+          $arguments += "--url=$env:URL"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:USER)) {
+          $arguments += "--user=$env:USER"
+        }
+
+        $command = "jf $($arguments -join ' ')"
+        $delimiter = [guid]::NewGuid().ToString()
+
+        @(
+          "command<<$delimiter"
+          $command
+          $delimiter
+        ) >> $env:GITHUB_OUTPUT
+
+        if ($env:IS_TEST -eq 'false') {
+          & jf @arguments
+        }

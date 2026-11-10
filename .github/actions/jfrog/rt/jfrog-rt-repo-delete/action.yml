@@ -1,0 +1,219 @@
+name: jfrog-rt-repo-delete
+description: 'Permanently delete repositories with all of their content from Artifactory.'
+
+inputs:
+  repository-pattern:
+    description: 'Specifies the repositories that should be removed. You can use wildcards to specify multiple repositories.'
+    required: true
+    default: ''
+  access-token:
+    description: 'JFrog access token.'
+    required: false
+    default: ''
+  client-cert-key-path:
+    description: 'Private key file for the client certificate in PEM format.'
+    required: false
+    default: ''
+  client-cert-path:
+    description: 'Client certificate file in PEM format.'
+    required: false
+    default: ''
+  password:
+    description: 'JFrog password.'
+    required: false
+    default: ''
+  quiet:
+    description: 'Set to `true` to skip the delete confirmation message.'
+    required: false
+    default: 'false'
+  server-id:
+    description: 'Server ID configured using the `jf config` command.'
+    required: false
+    default: ''
+  ssh-key-path:
+    description: 'SSH key file path.'
+    required: false
+    default: ''
+  ssh-passphrase:
+    description: 'SSH key passphrase.'
+    required: false
+    default: ''
+  url:
+    description: 'JFrog Platform URL. (example: `https://acme.jfrog.io`)'
+    required: false
+    default: ''
+  user:
+    description: 'JFrog username.'
+    required: false
+    default: ''
+  shell:
+    description: 'Shell to use for run steps. Acceptable values are: `bash`, `powershell`, `pwsh`.'
+    required: false
+    default: 'bash'
+  is-test:
+    description: 'Indicates if the action is tested.'
+    required: false
+    default: 'false'
+
+outputs:
+  command:
+    description: The JFrog command
+    value: ${{ steps.run_bash.outputs.command || steps.run_pwsh.outputs.command }}
+
+runs:
+  using: composite
+  steps:
+    - name: Run JFrog CLI command
+      id: run_bash
+      if: ${{ inputs.shell == 'bash' }}
+      shell: bash
+      env:
+        REPOSITORY_PATTERN: ${{ inputs.repository-pattern }}
+        ACCESS_TOKEN: ${{ inputs.access-token }}
+        CLIENT_CERT_KEY_PATH: ${{ inputs.client-cert-key-path }}
+        CLIENT_CERT_PATH: ${{ inputs.client-cert-path }}
+        PASSWORD: ${{ inputs.password }}
+        QUIET: ${{ inputs.quiet }}
+        SERVER_ID: ${{ inputs.server-id }}
+        SSH_KEY_PATH: ${{ inputs.ssh-key-path }}
+        SSH_PASSPHRASE: ${{ inputs.ssh-passphrase }}
+        URL: ${{ inputs.url }}
+        USER: ${{ inputs.user }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        arguments=(
+          'rt'
+          'repo-delete'
+          "$REPOSITORY_PATTERN"
+        )
+
+        if [[ -n "$ACCESS_TOKEN" ]]; then
+          arguments+=("--access-token=$ACCESS_TOKEN")
+        fi
+
+        if [[ -n "$CLIENT_CERT_KEY_PATH" ]]; then
+          arguments+=("--client-cert-key-path=$CLIENT_CERT_KEY_PATH")
+        fi
+
+        if [[ -n "$CLIENT_CERT_PATH" ]]; then
+          arguments+=("--client-cert-path=$CLIENT_CERT_PATH")
+        fi
+
+        if [[ -n "$PASSWORD" ]]; then
+          arguments+=("--password=$PASSWORD")
+        fi
+
+        if [[ "$QUIET" == 'true' ]]; then
+          arguments+=('--quiet')
+        fi
+
+        if [[ -n "$SERVER_ID" ]]; then
+          arguments+=("--server-id=$SERVER_ID")
+        fi
+
+        if [[ -n "$SSH_KEY_PATH" ]]; then
+          arguments+=("--ssh-key-path=$SSH_KEY_PATH")
+        fi
+
+        if [[ -n "$SSH_PASSPHRASE" ]]; then
+          arguments+=("--ssh-passphrase=$SSH_PASSPHRASE")
+        fi
+
+        if [[ -n "$URL" ]]; then
+          arguments+=("--url=$URL")
+        fi
+
+        if [[ -n "$USER" ]]; then
+          arguments+=("--user=$USER")
+        fi
+
+        command='jf'
+        for argument in "${arguments[@]}"; do
+          printf -v escaped '%q' "$argument"
+          command+=" $escaped"
+        done
+
+        echo "Executing JFrog CLI Command:"
+        echo "$command"
+        echo "command=$command" >> "$GITHUB_OUTPUT"
+
+        if [[ "$IS_TEST" == 'false' ]]; then
+          jf "${arguments[@]}"
+        fi
+
+    - name: Run JFrog CLI command
+      id: run_pwsh
+      if: ${{ inputs.shell == 'powershell' || inputs.shell == 'pwsh' }}
+      shell: ${{ inputs.shell }}
+      env:
+        REPOSITORY_PATTERN: ${{ inputs.repository-pattern }}
+        ACCESS_TOKEN: ${{ inputs.access-token }}
+        CLIENT_CERT_KEY_PATH: ${{ inputs.client-cert-key-path }}
+        CLIENT_CERT_PATH: ${{ inputs.client-cert-path }}
+        PASSWORD: ${{ inputs.password }}
+        QUIET: ${{ inputs.quiet }}
+        SERVER_ID: ${{ inputs.server-id }}
+        SSH_KEY_PATH: ${{ inputs.ssh-key-path }}
+        SSH_PASSPHRASE: ${{ inputs.ssh-passphrase }}
+        URL: ${{ inputs.url }}
+        USER: ${{ inputs.user }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        $arguments = @(
+          'rt'
+          'repo-delete'
+          "$env:REPOSITORY_PATTERN"
+        )
+
+        if (-not [string]::IsNullOrWhiteSpace($env:ACCESS_TOKEN)) {
+          $arguments += "--access-token=$env:ACCESS_TOKEN"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:CLIENT_CERT_KEY_PATH)) {
+          $arguments += "--client-cert-key-path=$env:CLIENT_CERT_KEY_PATH"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:CLIENT_CERT_PATH)) {
+          $arguments += "--client-cert-path=$env:CLIENT_CERT_PATH"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:PASSWORD)) {
+          $arguments += "--password=$env:PASSWORD"
+        }
+
+        if ($env:QUIET -eq 'true') {
+          $arguments += '--quiet'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SERVER_ID)) {
+          $arguments += "--server-id=$env:SERVER_ID"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SSH_KEY_PATH)) {
+          $arguments += "--ssh-key-path=$env:SSH_KEY_PATH"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SSH_PASSPHRASE)) {
+          $arguments += "--ssh-passphrase=$env:SSH_PASSPHRASE"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:URL)) {
+          $arguments += "--url=$env:URL"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:USER)) {
+          $arguments += "--user=$env:USER"
+        }
+
+        $command = "jf $($arguments -join ' ')"
+        $delimiter = [guid]::NewGuid().ToString()
+
+        @(
+          "command<<$delimiter"
+          $command
+          $delimiter
+        ) >> $env:GITHUB_OUTPUT
+
+        if ($env:IS_TEST -eq 'false') {
+          & jf @arguments
+        }

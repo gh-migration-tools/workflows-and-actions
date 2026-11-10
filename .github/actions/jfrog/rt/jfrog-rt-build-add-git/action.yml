@@ -1,0 +1,137 @@
+name: jfrog-rt-build-add-git
+description: 'Collects the Git revision and URL from the local `.git` directory and adds it to the build info.'
+
+inputs:
+  build-name:
+    description: 'Build name.'
+    required: true
+    default: ''
+  build-number:
+    description: 'Build number.'
+    required: true
+    default: ''
+  path-to-git:
+    description: 'Path to a directory containing the `.git` directory. If not specified, the `.git` directory is assumed to be in the current directory or in one of the parent directories.'
+    required: true
+    default: ''
+  config:
+    description: 'Path to a configuration file.'
+    required: false
+    default: ''
+  project:
+    description: 'JFrog Artifactory project key.'
+    required: false
+    default: ''
+  server-id:
+    description: 'Server ID configured using the `jf config` command.'
+    required: false
+    default: ''
+  shell:
+    description: 'Shell to use for run steps. Acceptable values are: `bash`, `powershell`, `pwsh`.'
+    required: false
+    default: 'bash'
+  is-test:
+    description: 'Indicates if the action is tested.'
+    required: false
+    default: 'false'
+
+outputs:
+  command:
+    description: The JFrog command
+    value: ${{ steps.run_bash.outputs.command || steps.run_pwsh.outputs.command }}
+
+runs:
+  using: composite
+  steps:
+    - name: Run JFrog CLI command
+      id: run_bash
+      if: ${{ inputs.shell == 'bash' }}
+      shell: bash
+      env:
+        BUILD_NAME: ${{ inputs.build-name }}
+        BUILD_NUMBER: ${{ inputs.build-number }}
+        PATH_TO_GIT: ${{ inputs.path-to-git }}
+        CONFIG: ${{ inputs.config }}
+        PROJECT: ${{ inputs.project }}
+        SERVER_ID: ${{ inputs.server-id }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        arguments=(
+          'rt'
+          'build-add-git'
+          "$BUILD_NAME"
+          "$BUILD_NUMBER"
+          "$PATH_TO_GIT"
+        )
+
+        if [[ -n "$CONFIG" ]]; then
+          arguments+=("--config=$CONFIG")
+        fi
+
+        if [[ -n "$PROJECT" ]]; then
+          arguments+=("--project=$PROJECT")
+        fi
+
+        if [[ -n "$SERVER_ID" ]]; then
+          arguments+=("--server-id=$SERVER_ID")
+        fi
+
+        command='jf'
+        for argument in "${arguments[@]}"; do
+          printf -v escaped '%q' "$argument"
+          command+=" $escaped"
+        done
+
+        echo "Executing JFrog CLI Command:"
+        echo "$command"
+        echo "command=$command" >> "$GITHUB_OUTPUT"
+
+        if [[ "$IS_TEST" == 'false' ]]; then
+          jf "${arguments[@]}"
+        fi
+
+    - name: Run JFrog CLI command
+      id: run_pwsh
+      if: ${{ inputs.shell == 'powershell' || inputs.shell == 'pwsh' }}
+      shell: ${{ inputs.shell }}
+      env:
+        BUILD_NAME: ${{ inputs.build-name }}
+        BUILD_NUMBER: ${{ inputs.build-number }}
+        PATH_TO_GIT: ${{ inputs.path-to-git }}
+        CONFIG: ${{ inputs.config }}
+        PROJECT: ${{ inputs.project }}
+        SERVER_ID: ${{ inputs.server-id }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        $arguments = @(
+          'rt'
+          'build-add-git'
+          "$env:BUILD_NAME"
+          "$env:BUILD_NUMBER"
+          "$env:PATH_TO_GIT"
+        )
+
+        if (-not [string]::IsNullOrWhiteSpace($env:CONFIG)) {
+          $arguments += "--config=$env:CONFIG"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:PROJECT)) {
+          $arguments += "--project=$env:PROJECT"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SERVER_ID)) {
+          $arguments += "--server-id=$env:SERVER_ID"
+        }
+
+        $command = "jf $($arguments -join ' ')"
+        $delimiter = [guid]::NewGuid().ToString()
+
+        @(
+          "command<<$delimiter"
+          $command
+          $delimiter
+        ) >> $env:GITHUB_OUTPUT
+
+        if ($env:IS_TEST -eq 'false') {
+          & jf @arguments
+        }

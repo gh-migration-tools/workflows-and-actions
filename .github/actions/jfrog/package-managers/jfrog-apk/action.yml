@@ -1,0 +1,238 @@
+name: jfrog-apk
+description: 'Run Alpine `apk` commands through Artifactory, with build info collection for `add`, `upgrade`, and `upload`.'
+
+inputs:
+  subcommand:
+    description: 'The `apk` subcommand.'
+    required: true
+    default: ''
+  alpine-version:
+    description: 'Alpine release version, e.g. `v3.20`. Used by upload (required) and to select the Artifactory path for other subcommands.'
+    required: false
+    default: ''
+  arch:
+    description: 'CPU architecture override (`x86_64`, `aarch64`, `armhf`, ...). Inferred from the `.apk` filename by default.'
+    required: false
+    default: ''
+  branch:
+    description: 'Alpine repository branch to upload into, e.g. `main` or `community`.'
+    required: false
+    default: ''
+  build-name:
+    description: 'Providing this option will collect and record build info for this build name. Build number option is mandatory when this option is provided.'
+    required: false
+    default: ''
+  build-number:
+    description: 'Providing this option will collect and record build info for this build number. Build name option is mandatory when this option is provided.'
+    required: false
+    default: ''
+  module:
+    description: 'Optional module name for the build info. Build name and number options are mandatory when this option is provided.'
+    required: false
+    default: ''
+  password:
+    description: 'JFrog password.'
+    required: false
+    default: ''
+  project:
+    description: 'JFrog Artifactory project key.'
+    required: false
+    default: ''
+  repo:
+    description: 'Specifies the Artifactory repository name for the selected package manager, replacing the interactive repository selection. The interactive selection offers virtual repositories of the matching package type, which is normally what this should be set to. Note that `gradle` matches the `gradle` package type rather than `maven`, and `pip`, `pipenv`, `poetry`, `twine` and `uv` all match `pypi`.'
+    required: false
+    default: ''
+  server-id:
+    description: 'Server ID configured using the `jf config` command.'
+    required: false
+    default: ''
+  user:
+    description: 'JFrog username.'
+    required: false
+    default: ''
+  shell:
+    description: 'Shell to use for run steps. Acceptable values are: `bash`, `powershell`, `pwsh`.'
+    required: false
+    default: 'bash'
+  is-test:
+    description: 'Indicates if the action is tested.'
+    required: false
+    default: 'false'
+
+outputs:
+  command:
+    description: The JFrog command
+    value: ${{ steps.run_bash.outputs.command || steps.run_pwsh.outputs.command }}
+
+runs:
+  using: composite
+  steps:
+    - name: Run JFrog CLI command
+      id: run_bash
+      if: ${{ inputs.shell == 'bash' }}
+      shell: bash
+      env:
+        SUBCOMMAND: ${{ inputs.subcommand }}
+        ALPINE_VERSION: ${{ inputs.alpine-version }}
+        ARCH: ${{ inputs.arch }}
+        BRANCH: ${{ inputs.branch }}
+        BUILD_NAME: ${{ inputs.build-name }}
+        BUILD_NUMBER: ${{ inputs.build-number }}
+        MODULE: ${{ inputs.module }}
+        PASSWORD: ${{ inputs.password }}
+        PROJECT: ${{ inputs.project }}
+        REPO: ${{ inputs.repo }}
+        SERVER_ID: ${{ inputs.server-id }}
+        USER: ${{ inputs.user }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        arguments=(
+          'apk'
+        )
+
+        if [[ -n "$SUBCOMMAND" ]]; then
+          read -r -a split_args <<< "$SUBCOMMAND"
+          arguments+=("${split_args[@]}")
+        fi
+
+        if [[ -n "$ALPINE_VERSION" ]]; then
+          arguments+=("--alpine-version=$ALPINE_VERSION")
+        fi
+
+        if [[ -n "$ARCH" ]]; then
+          arguments+=("--arch=$ARCH")
+        fi
+
+        if [[ -n "$BRANCH" ]]; then
+          arguments+=("--branch=$BRANCH")
+        fi
+
+        if [[ -n "$BUILD_NAME" ]]; then
+          arguments+=("--build-name=$BUILD_NAME")
+        fi
+
+        if [[ -n "$BUILD_NUMBER" ]]; then
+          arguments+=("--build-number=$BUILD_NUMBER")
+        fi
+
+        if [[ -n "$MODULE" ]]; then
+          arguments+=("--module=$MODULE")
+        fi
+
+        if [[ -n "$PASSWORD" ]]; then
+          arguments+=("--password=$PASSWORD")
+        fi
+
+        if [[ -n "$PROJECT" ]]; then
+          arguments+=("--project=$PROJECT")
+        fi
+
+        if [[ -n "$REPO" ]]; then
+          arguments+=("--repo=$REPO")
+        fi
+
+        if [[ -n "$SERVER_ID" ]]; then
+          arguments+=("--server-id=$SERVER_ID")
+        fi
+
+        if [[ -n "$USER" ]]; then
+          arguments+=("--user=$USER")
+        fi
+
+        command='jf'
+        for argument in "${arguments[@]}"; do
+          printf -v escaped '%q' "$argument"
+          command+=" $escaped"
+        done
+
+        echo "Executing JFrog CLI Command:"
+        echo "$command"
+        echo "command=$command" >> "$GITHUB_OUTPUT"
+
+        if [[ "$IS_TEST" == 'false' ]]; then
+          jf "${arguments[@]}"
+        fi
+
+    - name: Run JFrog CLI command
+      id: run_pwsh
+      if: ${{ inputs.shell == 'powershell' || inputs.shell == 'pwsh' }}
+      shell: ${{ inputs.shell }}
+      env:
+        SUBCOMMAND: ${{ inputs.subcommand }}
+        ALPINE_VERSION: ${{ inputs.alpine-version }}
+        ARCH: ${{ inputs.arch }}
+        BRANCH: ${{ inputs.branch }}
+        BUILD_NAME: ${{ inputs.build-name }}
+        BUILD_NUMBER: ${{ inputs.build-number }}
+        MODULE: ${{ inputs.module }}
+        PASSWORD: ${{ inputs.password }}
+        PROJECT: ${{ inputs.project }}
+        REPO: ${{ inputs.repo }}
+        SERVER_ID: ${{ inputs.server-id }}
+        USER: ${{ inputs.user }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        $arguments = @(
+          'apk'
+        )
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SUBCOMMAND)) {
+          $arguments += $env:SUBCOMMAND -split '\s+' | Where-Object { $_ }
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:ALPINE_VERSION)) {
+          $arguments += "--alpine-version=$env:ALPINE_VERSION"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:ARCH)) {
+          $arguments += "--arch=$env:ARCH"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:BRANCH)) {
+          $arguments += "--branch=$env:BRANCH"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:BUILD_NAME)) {
+          $arguments += "--build-name=$env:BUILD_NAME"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:BUILD_NUMBER)) {
+          $arguments += "--build-number=$env:BUILD_NUMBER"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:MODULE)) {
+          $arguments += "--module=$env:MODULE"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:PASSWORD)) {
+          $arguments += "--password=$env:PASSWORD"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:PROJECT)) {
+          $arguments += "--project=$env:PROJECT"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:REPO)) {
+          $arguments += "--repo=$env:REPO"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SERVER_ID)) {
+          $arguments += "--server-id=$env:SERVER_ID"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:USER)) {
+          $arguments += "--user=$env:USER"
+        }
+
+        $command = "jf $($arguments -join ' ')"
+        $delimiter = [guid]::NewGuid().ToString()
+
+        @(
+          "command<<$delimiter"
+          $command
+          $delimiter
+        ) >> $env:GITHUB_OUTPUT
+
+        if ($env:IS_TEST -eq 'false') {
+          & jf @arguments
+        }

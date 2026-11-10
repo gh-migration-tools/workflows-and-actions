@@ -1,0 +1,210 @@
+name: jfrog-nuget
+description: 'Run NuGet.'
+
+inputs:
+  args:
+    description: 'The `nuget` arguments.'
+    required: true
+    default: ''
+  allow-insecure-connections:
+    description: 'Set to `true` if you wish to configure NuGet sources with unsecured connections. This is recommended for testing purposes only.'
+    required: false
+    default: 'false'
+  build-name:
+    description: 'Providing this option will collect and record build info for this build name. Build number option is mandatory when this option is provided.'
+    required: false
+    default: ''
+  build-number:
+    description: 'Providing this option will collect and record build info for this build number. Build name option is mandatory when this option is provided.'
+    required: false
+    default: ''
+  module:
+    description: 'Optional module name for the build info. Build name and number options are mandatory when this option is provided.'
+    required: false
+    default: ''
+  nuget-v2:
+    description: 'Set to `true` if you''d like to use the NuGet V2 protocol when restoring packages from Artifactory.'
+    required: false
+    default: 'false'
+  project:
+    description: 'JFrog Artifactory project key.'
+    required: false
+    default: ''
+  repo:
+    description: 'Specifies the Artifactory repository name for the selected package manager, replacing the interactive repository selection. The interactive selection offers virtual repositories of the matching package type, which is normally what this should be set to. Note that `gradle` matches the `gradle` package type rather than `maven`, and `pip`, `pipenv`, `poetry`, `twine` and `uv` all match `pypi`.'
+    required: false
+    default: ''
+  repo-resolve:
+    description: 'Repository for dependencies resolution.'
+    required: false
+    default: ''
+  server-id:
+    description: 'Server ID configured using the `jf config` command.'
+    required: false
+    default: ''
+  shell:
+    description: 'Shell to use for run steps. Acceptable values are: `bash`, `powershell`, `pwsh`.'
+    required: false
+    default: 'bash'
+  is-test:
+    description: 'Indicates if the action is tested.'
+    required: false
+    default: 'false'
+
+outputs:
+  command:
+    description: The JFrog command
+    value: ${{ steps.run_bash.outputs.command || steps.run_pwsh.outputs.command }}
+
+runs:
+  using: composite
+  steps:
+    - name: Run JFrog CLI command
+      id: run_bash
+      if: ${{ inputs.shell == 'bash' }}
+      shell: bash
+      env:
+        ARGS: ${{ inputs.args }}
+        ALLOW_INSECURE_CONNECTIONS: ${{ inputs.allow-insecure-connections }}
+        BUILD_NAME: ${{ inputs.build-name }}
+        BUILD_NUMBER: ${{ inputs.build-number }}
+        MODULE: ${{ inputs.module }}
+        NUGET_V2: ${{ inputs.nuget-v2 }}
+        PROJECT: ${{ inputs.project }}
+        REPO: ${{ inputs.repo }}
+        REPO_RESOLVE: ${{ inputs.repo-resolve }}
+        SERVER_ID: ${{ inputs.server-id }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        arguments=(
+          'nuget'
+        )
+
+        if [[ -n "$ARGS" ]]; then
+          read -r -a split_args <<< "$ARGS"
+          arguments+=("${split_args[@]}")
+        fi
+
+        if [[ "$ALLOW_INSECURE_CONNECTIONS" == 'true' ]]; then
+          arguments+=('--allow-insecure-connections')
+        fi
+
+        if [[ -n "$BUILD_NAME" ]]; then
+          arguments+=("--build-name=$BUILD_NAME")
+        fi
+
+        if [[ -n "$BUILD_NUMBER" ]]; then
+          arguments+=("--build-number=$BUILD_NUMBER")
+        fi
+
+        if [[ -n "$MODULE" ]]; then
+          arguments+=("--module=$MODULE")
+        fi
+
+        if [[ "$NUGET_V2" == 'true' ]]; then
+          arguments+=('--nuget-v2')
+        fi
+
+        if [[ -n "$PROJECT" ]]; then
+          arguments+=("--project=$PROJECT")
+        fi
+
+        if [[ -n "$REPO" ]]; then
+          arguments+=("--repo=$REPO")
+        fi
+
+        if [[ -n "$REPO_RESOLVE" ]]; then
+          arguments+=("--repo-resolve=$REPO_RESOLVE")
+        fi
+
+        if [[ -n "$SERVER_ID" ]]; then
+          arguments+=("--server-id=$SERVER_ID")
+        fi
+
+        command='jf'
+        for argument in "${arguments[@]}"; do
+          printf -v escaped '%q' "$argument"
+          command+=" $escaped"
+        done
+
+        echo "Executing JFrog CLI Command:"
+        echo "$command"
+        echo "command=$command" >> "$GITHUB_OUTPUT"
+
+        if [[ "$IS_TEST" == 'false' ]]; then
+          jf "${arguments[@]}"
+        fi
+
+    - name: Run JFrog CLI command
+      id: run_pwsh
+      if: ${{ inputs.shell == 'powershell' || inputs.shell == 'pwsh' }}
+      shell: ${{ inputs.shell }}
+      env:
+        ARGS: ${{ inputs.args }}
+        ALLOW_INSECURE_CONNECTIONS: ${{ inputs.allow-insecure-connections }}
+        BUILD_NAME: ${{ inputs.build-name }}
+        BUILD_NUMBER: ${{ inputs.build-number }}
+        MODULE: ${{ inputs.module }}
+        NUGET_V2: ${{ inputs.nuget-v2 }}
+        PROJECT: ${{ inputs.project }}
+        REPO: ${{ inputs.repo }}
+        REPO_RESOLVE: ${{ inputs.repo-resolve }}
+        SERVER_ID: ${{ inputs.server-id }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        $arguments = @(
+          'nuget'
+        )
+
+        if (-not [string]::IsNullOrWhiteSpace($env:ARGS)) {
+          $arguments += $env:ARGS -split '\s+' | Where-Object { $_ }
+        }
+
+        if ($env:ALLOW_INSECURE_CONNECTIONS -eq 'true') {
+          $arguments += '--allow-insecure-connections'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:BUILD_NAME)) {
+          $arguments += "--build-name=$env:BUILD_NAME"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:BUILD_NUMBER)) {
+          $arguments += "--build-number=$env:BUILD_NUMBER"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:MODULE)) {
+          $arguments += "--module=$env:MODULE"
+        }
+
+        if ($env:NUGET_V2 -eq 'true') {
+          $arguments += '--nuget-v2'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:PROJECT)) {
+          $arguments += "--project=$env:PROJECT"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:REPO)) {
+          $arguments += "--repo=$env:REPO"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:REPO_RESOLVE)) {
+          $arguments += "--repo-resolve=$env:REPO_RESOLVE"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SERVER_ID)) {
+          $arguments += "--server-id=$env:SERVER_ID"
+        }
+
+        $command = "jf $($arguments -join ' ')"
+        $delimiter = [guid]::NewGuid().ToString()
+
+        @(
+          "command<<$delimiter"
+          $command
+          $delimiter
+        ) >> $env:GITHUB_OUTPUT
+
+        if ($env:IS_TEST -eq 'false') {
+          & jf @arguments
+        }

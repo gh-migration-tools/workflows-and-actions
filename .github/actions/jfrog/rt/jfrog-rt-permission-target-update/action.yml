@@ -1,0 +1,233 @@
+name: jfrog-rt-permission-target-update
+description: 'Update a permission target in the JFrog Platform.'
+
+inputs:
+  template-path:
+    description: 'Specifies the local file system path for the template file to be used for the permission target update. The template can be created using the `jf.exe rt ptu` command.'
+    required: true
+    default: ''
+  access-token:
+    description: 'JFrog access token.'
+    required: false
+    default: ''
+  client-cert-key-path:
+    description: 'Private key file for the client certificate in PEM format.'
+    required: false
+    default: ''
+  client-cert-path:
+    description: 'Client certificate file in PEM format.'
+    required: false
+    default: ''
+  format:
+    description: 'Defines the output format of the command. Acceptable values are: `json`.'
+    required: false
+    default: ''
+  password:
+    description: 'JFrog password.'
+    required: false
+    default: ''
+  server-id:
+    description: 'Server ID configured using the `jf config` command.'
+    required: false
+    default: ''
+  ssh-key-path:
+    description: 'SSH key file path.'
+    required: false
+    default: ''
+  ssh-passphrase:
+    description: 'SSH key passphrase.'
+    required: false
+    default: ''
+  url:
+    description: 'JFrog Artifactory URL. (example: `https://acme.jfrog.io/artifactory`)'
+    required: false
+    default: ''
+  user:
+    description: 'JFrog username.'
+    required: false
+    default: ''
+  vars:
+    description: 'List of semicolon-separated (`;`) variables in the form of `key1=value1;key2=value2;...` (wrapped by quotes) to be replaced in the template. In the template, the variables should be used as follows: `${key1}`.'
+    required: false
+    default: ''
+  shell:
+    description: 'Shell to use for run steps. Acceptable values are: `bash`, `powershell`, `pwsh`.'
+    required: false
+    default: 'bash'
+  is-test:
+    description: 'Indicates if the action is tested.'
+    required: false
+    default: 'false'
+
+outputs:
+  command:
+    description: The JFrog command
+    value: ${{ steps.run_bash.outputs.command || steps.run_pwsh.outputs.command }}
+
+runs:
+  using: composite
+  steps:
+    - name: Run JFrog CLI command
+      id: run_bash
+      if: ${{ inputs.shell == 'bash' }}
+      shell: bash
+      env:
+        TEMPLATE_PATH: ${{ inputs.template-path }}
+        ACCESS_TOKEN: ${{ inputs.access-token }}
+        CLIENT_CERT_KEY_PATH: ${{ inputs.client-cert-key-path }}
+        CLIENT_CERT_PATH: ${{ inputs.client-cert-path }}
+        FORMAT: ${{ inputs.format }}
+        PASSWORD: ${{ inputs.password }}
+        SERVER_ID: ${{ inputs.server-id }}
+        SSH_KEY_PATH: ${{ inputs.ssh-key-path }}
+        SSH_PASSPHRASE: ${{ inputs.ssh-passphrase }}
+        URL: ${{ inputs.url }}
+        USER: ${{ inputs.user }}
+        VARS: ${{ inputs.vars }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        arguments=(
+          'rt'
+          'permission-target-update'
+          "$TEMPLATE_PATH"
+        )
+
+        if [[ -n "$ACCESS_TOKEN" ]]; then
+          arguments+=("--access-token=$ACCESS_TOKEN")
+        fi
+
+        if [[ -n "$CLIENT_CERT_KEY_PATH" ]]; then
+          arguments+=("--client-cert-key-path=$CLIENT_CERT_KEY_PATH")
+        fi
+
+        if [[ -n "$CLIENT_CERT_PATH" ]]; then
+          arguments+=("--client-cert-path=$CLIENT_CERT_PATH")
+        fi
+
+        if [[ -n "$FORMAT" ]]; then
+          arguments+=("--format=$FORMAT")
+        fi
+
+        if [[ -n "$PASSWORD" ]]; then
+          arguments+=("--password=$PASSWORD")
+        fi
+
+        if [[ -n "$SERVER_ID" ]]; then
+          arguments+=("--server-id=$SERVER_ID")
+        fi
+
+        if [[ -n "$SSH_KEY_PATH" ]]; then
+          arguments+=("--ssh-key-path=$SSH_KEY_PATH")
+        fi
+
+        if [[ -n "$SSH_PASSPHRASE" ]]; then
+          arguments+=("--ssh-passphrase=$SSH_PASSPHRASE")
+        fi
+
+        if [[ -n "$URL" ]]; then
+          arguments+=("--url=$URL")
+        fi
+
+        if [[ -n "$USER" ]]; then
+          arguments+=("--user=$USER")
+        fi
+
+        if [[ -n "$VARS" ]]; then
+          arguments+=("--vars=$VARS")
+        fi
+
+        command='jf'
+        for argument in "${arguments[@]}"; do
+          printf -v escaped '%q' "$argument"
+          command+=" $escaped"
+        done
+
+        echo "Executing JFrog CLI Command:"
+        echo "$command"
+        echo "command=$command" >> "$GITHUB_OUTPUT"
+
+        if [[ "$IS_TEST" == 'false' ]]; then
+          jf "${arguments[@]}"
+        fi
+
+    - name: Run JFrog CLI command
+      id: run_pwsh
+      if: ${{ inputs.shell == 'powershell' || inputs.shell == 'pwsh' }}
+      shell: ${{ inputs.shell }}
+      env:
+        TEMPLATE_PATH: ${{ inputs.template-path }}
+        ACCESS_TOKEN: ${{ inputs.access-token }}
+        CLIENT_CERT_KEY_PATH: ${{ inputs.client-cert-key-path }}
+        CLIENT_CERT_PATH: ${{ inputs.client-cert-path }}
+        FORMAT: ${{ inputs.format }}
+        PASSWORD: ${{ inputs.password }}
+        SERVER_ID: ${{ inputs.server-id }}
+        SSH_KEY_PATH: ${{ inputs.ssh-key-path }}
+        SSH_PASSPHRASE: ${{ inputs.ssh-passphrase }}
+        URL: ${{ inputs.url }}
+        USER: ${{ inputs.user }}
+        VARS: ${{ inputs.vars }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        $arguments = @(
+          'rt'
+          'permission-target-update'
+          "$env:TEMPLATE_PATH"
+        )
+
+        if (-not [string]::IsNullOrWhiteSpace($env:ACCESS_TOKEN)) {
+          $arguments += "--access-token=$env:ACCESS_TOKEN"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:CLIENT_CERT_KEY_PATH)) {
+          $arguments += "--client-cert-key-path=$env:CLIENT_CERT_KEY_PATH"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:CLIENT_CERT_PATH)) {
+          $arguments += "--client-cert-path=$env:CLIENT_CERT_PATH"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:FORMAT)) {
+          $arguments += "--format=$env:FORMAT"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:PASSWORD)) {
+          $arguments += "--password=$env:PASSWORD"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SERVER_ID)) {
+          $arguments += "--server-id=$env:SERVER_ID"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SSH_KEY_PATH)) {
+          $arguments += "--ssh-key-path=$env:SSH_KEY_PATH"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SSH_PASSPHRASE)) {
+          $arguments += "--ssh-passphrase=$env:SSH_PASSPHRASE"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:URL)) {
+          $arguments += "--url=$env:URL"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:USER)) {
+          $arguments += "--user=$env:USER"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:VARS)) {
+          $arguments += "--vars=$env:VARS"
+        }
+
+        $command = "jf $($arguments -join ' ')"
+        $delimiter = [guid]::NewGuid().ToString()
+
+        @(
+          "command<<$delimiter"
+          $command
+          $delimiter
+        ) >> $env:GITHUB_OUTPUT
+
+        if ($env:IS_TEST -eq 'false') {
+          & jf @arguments
+        }

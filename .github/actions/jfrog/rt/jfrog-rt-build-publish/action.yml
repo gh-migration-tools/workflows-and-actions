@@ -1,0 +1,381 @@
+name: jfrog-rt-build-publish
+description: 'Publish build info.'
+
+inputs:
+  build-name:
+    description: 'Build name.'
+    required: true
+    default: ''
+  build-number:
+    description: 'Build number.'
+    required: true
+    default: ''
+  format:
+    description: 'Defines the output format of the command. Acceptable values are: `json`, `table`.'
+    required: false
+    default: ''
+  access-token:
+    description: 'JFrog access token.'
+    required: false
+    default: ''
+  build-url:
+    description: 'Can be used for setting the CI server build URL in the build info.'
+    required: false
+    default: ''
+  collect-env:
+    description: 'Set to `true` to collect all environment variables and add them to the build info.'
+    required: false
+    default: 'false'
+  collect-git-info:
+    description: 'Set to `true` to collect Git revision and URL from the local `.git` directory and adds it to the build info.'
+    required: false
+    default: 'false'
+  dep-exclude-scopes:
+    description: 'List of semicolon-separated (`;`) dependency scopes to exclude from the published build info. Relevant for Package managers with supported dependency scopes (e.g. Maven, NPM). For example: `test;provided`.'
+    required: false
+    default: ''
+  detailed-summary:
+    description: 'Set to `true` to get a command summary with details about the build info artifact.'
+    required: false
+    default: 'false'
+  dot-git-path:
+    description: 'Path to the `.git` directory. If not provided, the `.git` directory will be searched in the current working directory or its parent directories. Only respected when `collect-git-info` is enabled.'
+    required: false
+    default: ''
+  dry-run:
+    description: 'Set to `true` to get a preview of the recorded build info, without publishing it to Artifactory.'
+    required: false
+    default: 'false'
+  env-exclude:
+    description: 'List of case insensitive patterns in the form of `value1;value2;...`. Environment variables match those patterns will be excluded.'
+    required: false
+    default: ''
+  env-include:
+    description: 'List of case insensitive patterns in the form of `value1;value2;...`. Environment variables match those patterns will be excluded.'
+    required: false
+    default: ''
+  git-config-file-path:
+    description: 'Path to the `git` configuration file. Only respected when `collect-git-info` is enabled.'
+    required: false
+    default: ''
+  insecure-tls:
+    description: 'Set to `true` to skip TLS certificates verification.'
+    required: false
+    default: 'false'
+  overwrite:
+    description: 'Overwrites all existing occurrences of build infos with the provided name and number. Build artifacts will not be deleted.'
+    required: false
+    default: 'false'
+  password:
+    description: 'JFrog password.'
+    required: false
+    default: ''
+  project:
+    description: 'JFrog Artifactory project key.'
+    required: false
+    default: ''
+  server-id:
+    description: 'Server ID configured using the `jf config` command.'
+    required: false
+    default: ''
+  ssh-key-path:
+    description: 'SSH key file path.'
+    required: false
+    default: ''
+  ssh-passphrase:
+    description: 'SSH key passphrase.'
+    required: false
+    default: ''
+  url:
+    description: 'JFrog Platform URL. (example: `https://acme.jfrog.io`)'
+    required: false
+    default: ''
+  user:
+    description: 'JFrog username.'
+    required: false
+    default: ''
+  shell:
+    description: 'Shell to use for run steps. Acceptable values are: `bash`, `powershell`, `pwsh`.'
+    required: false
+    default: 'bash'
+  is-test:
+    description: 'Indicates if the action is tested.'
+    required: false
+    default: 'false'
+
+outputs:
+  command:
+    description: The JFrog command
+    value: ${{ steps.run_bash.outputs.command || steps.run_pwsh.outputs.command }}
+
+runs:
+  using: composite
+  steps:
+    - name: Run JFrog CLI command
+      id: run_bash
+      if: ${{ inputs.shell == 'bash' }}
+      shell: bash
+      env:
+        BUILD_NAME: ${{ inputs.build-name }}
+        BUILD_NUMBER: ${{ inputs.build-number }}
+        FORMAT: ${{ inputs.format }}
+        ACCESS_TOKEN: ${{ inputs.access-token }}
+        BUILD_URL: ${{ inputs.build-url }}
+        COLLECT_ENV: ${{ inputs.collect-env }}
+        COLLECT_GIT_INFO: ${{ inputs.collect-git-info }}
+        DEP_EXCLUDE_SCOPES: ${{ inputs.dep-exclude-scopes }}
+        DETAILED_SUMMARY: ${{ inputs.detailed-summary }}
+        DOT_GIT_PATH: ${{ inputs.dot-git-path }}
+        DRY_RUN: ${{ inputs.dry-run }}
+        ENV_EXCLUDE: ${{ inputs.env-exclude }}
+        ENV_INCLUDE: ${{ inputs.env-include }}
+        GIT_CONFIG_FILE_PATH: ${{ inputs.git-config-file-path }}
+        INSECURE_TLS: ${{ inputs.insecure-tls }}
+        OVERWRITE: ${{ inputs.overwrite }}
+        PASSWORD: ${{ inputs.password }}
+        PROJECT: ${{ inputs.project }}
+        SERVER_ID: ${{ inputs.server-id }}
+        SSH_KEY_PATH: ${{ inputs.ssh-key-path }}
+        SSH_PASSPHRASE: ${{ inputs.ssh-passphrase }}
+        URL: ${{ inputs.url }}
+        USER: ${{ inputs.user }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        arguments=(
+          'rt'
+          'build-publish'
+          "$BUILD_NAME"
+          "$BUILD_NUMBER"
+        )
+
+        if [[ -n "$FORMAT" ]]; then
+          arguments+=("--format=$FORMAT")
+        fi
+
+        if [[ -n "$ACCESS_TOKEN" ]]; then
+          arguments+=("--access-token=$ACCESS_TOKEN")
+        fi
+
+        if [[ -n "$BUILD_URL" ]]; then
+          arguments+=("--build-url=$BUILD_URL")
+        fi
+
+        if [[ "$COLLECT_ENV" == 'true' ]]; then
+          arguments+=('--collect-env')
+        fi
+
+        if [[ "$COLLECT_GIT_INFO" == 'true' ]]; then
+          arguments+=('--collect-git-info')
+        fi
+
+        if [[ -n "$DEP_EXCLUDE_SCOPES" ]]; then
+          arguments+=("--dep-exclude-scopes=$DEP_EXCLUDE_SCOPES")
+        fi
+
+        if [[ "$DETAILED_SUMMARY" == 'true' ]]; then
+          arguments+=('--detailed-summary')
+        fi
+
+        if [[ -n "$DOT_GIT_PATH" ]]; then
+          arguments+=("--dot-git-path=$DOT_GIT_PATH")
+        fi
+
+        if [[ "$DRY_RUN" == 'true' ]]; then
+          arguments+=('--dry-run')
+        fi
+
+        if [[ -n "$ENV_EXCLUDE" ]]; then
+          arguments+=("--env-exclude=$ENV_EXCLUDE")
+        fi
+
+        if [[ -n "$ENV_INCLUDE" ]]; then
+          arguments+=("--env-include=$ENV_INCLUDE")
+        fi
+
+        if [[ -n "$GIT_CONFIG_FILE_PATH" ]]; then
+          arguments+=("--git-config-file-path=$GIT_CONFIG_FILE_PATH")
+        fi
+
+        if [[ "$INSECURE_TLS" == 'true' ]]; then
+          arguments+=('--insecure-tls')
+        fi
+
+        if [[ "$OVERWRITE" == 'true' ]]; then
+          arguments+=('--overwrite')
+        fi
+
+        if [[ -n "$PASSWORD" ]]; then
+          arguments+=("--password=$PASSWORD")
+        fi
+
+        if [[ -n "$PROJECT" ]]; then
+          arguments+=("--project=$PROJECT")
+        fi
+
+        if [[ -n "$SERVER_ID" ]]; then
+          arguments+=("--server-id=$SERVER_ID")
+        fi
+
+        if [[ -n "$SSH_KEY_PATH" ]]; then
+          arguments+=("--ssh-key-path=$SSH_KEY_PATH")
+        fi
+
+        if [[ -n "$SSH_PASSPHRASE" ]]; then
+          arguments+=("--ssh-passphrase=$SSH_PASSPHRASE")
+        fi
+
+        if [[ -n "$URL" ]]; then
+          arguments+=("--url=$URL")
+        fi
+
+        if [[ -n "$USER" ]]; then
+          arguments+=("--user=$USER")
+        fi
+
+        command='jf'
+        for argument in "${arguments[@]}"; do
+          printf -v escaped '%q' "$argument"
+          command+=" $escaped"
+        done
+
+        echo "Executing JFrog CLI Command:"
+        echo "$command"
+        echo "command=$command" >> "$GITHUB_OUTPUT"
+
+        if [[ "$IS_TEST" == 'false' ]]; then
+          jf "${arguments[@]}"
+        fi
+
+    - name: Run JFrog CLI command
+      id: run_pwsh
+      if: ${{ inputs.shell == 'powershell' || inputs.shell == 'pwsh' }}
+      shell: ${{ inputs.shell }}
+      env:
+        BUILD_NAME: ${{ inputs.build-name }}
+        BUILD_NUMBER: ${{ inputs.build-number }}
+        FORMAT: ${{ inputs.format }}
+        ACCESS_TOKEN: ${{ inputs.access-token }}
+        BUILD_URL: ${{ inputs.build-url }}
+        COLLECT_ENV: ${{ inputs.collect-env }}
+        COLLECT_GIT_INFO: ${{ inputs.collect-git-info }}
+        DEP_EXCLUDE_SCOPES: ${{ inputs.dep-exclude-scopes }}
+        DETAILED_SUMMARY: ${{ inputs.detailed-summary }}
+        DOT_GIT_PATH: ${{ inputs.dot-git-path }}
+        DRY_RUN: ${{ inputs.dry-run }}
+        ENV_EXCLUDE: ${{ inputs.env-exclude }}
+        ENV_INCLUDE: ${{ inputs.env-include }}
+        GIT_CONFIG_FILE_PATH: ${{ inputs.git-config-file-path }}
+        INSECURE_TLS: ${{ inputs.insecure-tls }}
+        OVERWRITE: ${{ inputs.overwrite }}
+        PASSWORD: ${{ inputs.password }}
+        PROJECT: ${{ inputs.project }}
+        SERVER_ID: ${{ inputs.server-id }}
+        SSH_KEY_PATH: ${{ inputs.ssh-key-path }}
+        SSH_PASSPHRASE: ${{ inputs.ssh-passphrase }}
+        URL: ${{ inputs.url }}
+        USER: ${{ inputs.user }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        $arguments = @(
+          'rt'
+          'build-publish'
+          "$env:BUILD_NAME"
+          "$env:BUILD_NUMBER"
+        )
+
+        if (-not [string]::IsNullOrWhiteSpace($env:FORMAT)) {
+          $arguments += "--format=$env:FORMAT"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:ACCESS_TOKEN)) {
+          $arguments += "--access-token=$env:ACCESS_TOKEN"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:BUILD_URL)) {
+          $arguments += "--build-url=$env:BUILD_URL"
+        }
+
+        if ($env:COLLECT_ENV -eq 'true') {
+          $arguments += '--collect-env'
+        }
+
+        if ($env:COLLECT_GIT_INFO -eq 'true') {
+          $arguments += '--collect-git-info'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:DEP_EXCLUDE_SCOPES)) {
+          $arguments += "--dep-exclude-scopes=$env:DEP_EXCLUDE_SCOPES"
+        }
+
+        if ($env:DETAILED_SUMMARY -eq 'true') {
+          $arguments += '--detailed-summary'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:DOT_GIT_PATH)) {
+          $arguments += "--dot-git-path=$env:DOT_GIT_PATH"
+        }
+
+        if ($env:DRY_RUN -eq 'true') {
+          $arguments += '--dry-run'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:ENV_EXCLUDE)) {
+          $arguments += "--env-exclude=$env:ENV_EXCLUDE"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:ENV_INCLUDE)) {
+          $arguments += "--env-include=$env:ENV_INCLUDE"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:GIT_CONFIG_FILE_PATH)) {
+          $arguments += "--git-config-file-path=$env:GIT_CONFIG_FILE_PATH"
+        }
+
+        if ($env:INSECURE_TLS -eq 'true') {
+          $arguments += '--insecure-tls'
+        }
+
+        if ($env:OVERWRITE -eq 'true') {
+          $arguments += '--overwrite'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:PASSWORD)) {
+          $arguments += "--password=$env:PASSWORD"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:PROJECT)) {
+          $arguments += "--project=$env:PROJECT"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SERVER_ID)) {
+          $arguments += "--server-id=$env:SERVER_ID"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SSH_KEY_PATH)) {
+          $arguments += "--ssh-key-path=$env:SSH_KEY_PATH"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SSH_PASSPHRASE)) {
+          $arguments += "--ssh-passphrase=$env:SSH_PASSPHRASE"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:URL)) {
+          $arguments += "--url=$env:URL"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:USER)) {
+          $arguments += "--user=$env:USER"
+        }
+
+        $command = "jf $($arguments -join ' ')"
+        $delimiter = [guid]::NewGuid().ToString()
+
+        @(
+          "command<<$delimiter"
+          $command
+          $delimiter
+        ) >> $env:GITHUB_OUTPUT
+
+        if ($env:IS_TEST -eq 'false') {
+          & jf @arguments
+        }

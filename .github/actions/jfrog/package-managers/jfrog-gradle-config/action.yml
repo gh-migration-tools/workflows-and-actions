@@ -1,0 +1,223 @@
+name: jfrog-gradle-config
+description: 'Generate `gradle` build configuration.'
+
+inputs:
+  deploy-ivy-desc:
+    description: 'Set to `false` if you don''t wish to deploy Ivy descriptors.'
+    required: false
+    default: ''
+  deploy-maven-desc:
+    description: 'Set to `false` if you don''t wish to deploy Maven descriptors.'
+    required: false
+    default: ''
+  global:
+    description: 'Set to `true` to make the configuration global (for all projects). Specific projects can override the global configuration.'
+    required: false
+    default: 'false'
+  ivy-artifacts-pattern:
+    description: '`/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext]` Set the deployed Ivy artifacts pattern.'
+    required: false
+    default: ''
+  ivy-desc-pattern:
+    description: '`/[module]/ivy-[revision].xml` Set the deployed Ivy descriptor pattern.'
+    required: false
+    default: ''
+  repo-deploy:
+    description: 'Repository for artifacts deployment.'
+    required: false
+    default: ''
+  repo-resolve:
+    description: 'Repository for dependencies resolution.'
+    required: false
+    default: ''
+  server-id-deploy:
+    description: 'Artifactory server ID for deployment. The server should be configured using the `jfrog c add` command.'
+    required: false
+    default: ''
+  server-id-resolve:
+    description: 'Artifactory server ID for resolution. The server should be configured using the `jfrog c add` command.'
+    required: false
+    default: ''
+  use-wrapper:
+    description: 'Set to `true` to use the wrapper.'
+    required: false
+    default: 'false'
+  uses-plugin:
+    description: 'Set to `true` if the Gradle Artifactory Plugin is already applied in the build script.'
+    required: false
+    default: 'false'
+  shell:
+    description: 'Shell to use for run steps. Acceptable values are: `bash`, `powershell`, `pwsh`.'
+    required: false
+    default: 'bash'
+  is-test:
+    description: 'Indicates if the action is tested.'
+    required: false
+    default: 'false'
+
+outputs:
+  command:
+    description: The JFrog command
+    value: ${{ steps.run_bash.outputs.command || steps.run_pwsh.outputs.command }}
+
+runs:
+  using: composite
+  steps:
+    - name: Run JFrog CLI command
+      id: run_bash
+      if: ${{ inputs.shell == 'bash' }}
+      shell: bash
+      env:
+        DEPLOY_IVY_DESC: ${{ inputs.deploy-ivy-desc }}
+        DEPLOY_MAVEN_DESC: ${{ inputs.deploy-maven-desc }}
+        GLOBAL: ${{ inputs.global }}
+        IVY_ARTIFACTS_PATTERN: ${{ inputs.ivy-artifacts-pattern }}
+        IVY_DESC_PATTERN: ${{ inputs.ivy-desc-pattern }}
+        REPO_DEPLOY: ${{ inputs.repo-deploy }}
+        REPO_RESOLVE: ${{ inputs.repo-resolve }}
+        SERVER_ID_DEPLOY: ${{ inputs.server-id-deploy }}
+        SERVER_ID_RESOLVE: ${{ inputs.server-id-resolve }}
+        USE_WRAPPER: ${{ inputs.use-wrapper }}
+        USES_PLUGIN: ${{ inputs.uses-plugin }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        arguments=(
+          'gradle-config'
+        )
+
+        if [[ -n "$DEPLOY_IVY_DESC" ]]; then
+          arguments+=("--deploy-ivy-desc=$DEPLOY_IVY_DESC")
+        fi
+
+        if [[ -n "$DEPLOY_MAVEN_DESC" ]]; then
+          arguments+=("--deploy-maven-desc=$DEPLOY_MAVEN_DESC")
+        fi
+
+        if [[ "$GLOBAL" == 'true' ]]; then
+          arguments+=('--global')
+        fi
+
+        if [[ -n "$IVY_ARTIFACTS_PATTERN" ]]; then
+          arguments+=("--ivy-artifacts-pattern=$IVY_ARTIFACTS_PATTERN")
+        fi
+
+        if [[ -n "$IVY_DESC_PATTERN" ]]; then
+          arguments+=("--ivy-desc-pattern=$IVY_DESC_PATTERN")
+        fi
+
+        if [[ -n "$REPO_DEPLOY" ]]; then
+          arguments+=("--repo-deploy=$REPO_DEPLOY")
+        fi
+
+        if [[ -n "$REPO_RESOLVE" ]]; then
+          arguments+=("--repo-resolve=$REPO_RESOLVE")
+        fi
+
+        if [[ -n "$SERVER_ID_DEPLOY" ]]; then
+          arguments+=("--server-id-deploy=$SERVER_ID_DEPLOY")
+        fi
+
+        if [[ -n "$SERVER_ID_RESOLVE" ]]; then
+          arguments+=("--server-id-resolve=$SERVER_ID_RESOLVE")
+        fi
+
+        if [[ "$USE_WRAPPER" == 'true' ]]; then
+          arguments+=('--use-wrapper')
+        fi
+
+        if [[ "$USES_PLUGIN" == 'true' ]]; then
+          arguments+=('--uses-plugin')
+        fi
+
+        command='jf'
+        for argument in "${arguments[@]}"; do
+          printf -v escaped '%q' "$argument"
+          command+=" $escaped"
+        done
+
+        echo "Executing JFrog CLI Command:"
+        echo "$command"
+        echo "command=$command" >> "$GITHUB_OUTPUT"
+
+        if [[ "$IS_TEST" == 'false' ]]; then
+          jf "${arguments[@]}"
+        fi
+
+    - name: Run JFrog CLI command
+      id: run_pwsh
+      if: ${{ inputs.shell == 'powershell' || inputs.shell == 'pwsh' }}
+      shell: ${{ inputs.shell }}
+      env:
+        DEPLOY_IVY_DESC: ${{ inputs.deploy-ivy-desc }}
+        DEPLOY_MAVEN_DESC: ${{ inputs.deploy-maven-desc }}
+        GLOBAL: ${{ inputs.global }}
+        IVY_ARTIFACTS_PATTERN: ${{ inputs.ivy-artifacts-pattern }}
+        IVY_DESC_PATTERN: ${{ inputs.ivy-desc-pattern }}
+        REPO_DEPLOY: ${{ inputs.repo-deploy }}
+        REPO_RESOLVE: ${{ inputs.repo-resolve }}
+        SERVER_ID_DEPLOY: ${{ inputs.server-id-deploy }}
+        SERVER_ID_RESOLVE: ${{ inputs.server-id-resolve }}
+        USE_WRAPPER: ${{ inputs.use-wrapper }}
+        USES_PLUGIN: ${{ inputs.uses-plugin }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        $arguments = @(
+          'gradle-config'
+        )
+
+        if (-not [string]::IsNullOrWhiteSpace($env:DEPLOY_IVY_DESC)) {
+          $arguments += "--deploy-ivy-desc=$env:DEPLOY_IVY_DESC"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:DEPLOY_MAVEN_DESC)) {
+          $arguments += "--deploy-maven-desc=$env:DEPLOY_MAVEN_DESC"
+        }
+
+        if ($env:GLOBAL -eq 'true') {
+          $arguments += '--global'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:IVY_ARTIFACTS_PATTERN)) {
+          $arguments += "--ivy-artifacts-pattern=$env:IVY_ARTIFACTS_PATTERN"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:IVY_DESC_PATTERN)) {
+          $arguments += "--ivy-desc-pattern=$env:IVY_DESC_PATTERN"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:REPO_DEPLOY)) {
+          $arguments += "--repo-deploy=$env:REPO_DEPLOY"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:REPO_RESOLVE)) {
+          $arguments += "--repo-resolve=$env:REPO_RESOLVE"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SERVER_ID_DEPLOY)) {
+          $arguments += "--server-id-deploy=$env:SERVER_ID_DEPLOY"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:SERVER_ID_RESOLVE)) {
+          $arguments += "--server-id-resolve=$env:SERVER_ID_RESOLVE"
+        }
+
+        if ($env:USE_WRAPPER -eq 'true') {
+          $arguments += '--use-wrapper'
+        }
+
+        if ($env:USES_PLUGIN -eq 'true') {
+          $arguments += '--uses-plugin'
+        }
+
+        $command = "jf $($arguments -join ' ')"
+        $delimiter = [guid]::NewGuid().ToString()
+
+        @(
+          "command<<$delimiter"
+          $command
+          $delimiter
+        ) >> $env:GITHUB_OUTPUT
+
+        if ($env:IS_TEST -eq 'false') {
+          & jf @arguments
+        }

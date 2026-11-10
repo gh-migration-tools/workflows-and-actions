@@ -1,0 +1,255 @@
+name: jfrog-rt-transfer-files
+description: 'Transfer files from one Artifactory to another.'
+
+inputs:
+  source-server-id:
+    description: 'Server ID of the Artifactory instance to transfer from.'
+    required: true
+    default: ''
+  target-server-id:
+    description: 'Server ID of the Artifactory instance to transfer to.'
+    required: true
+    default: ''
+  created-after:
+    description: 'Transfer only files created at or after this exact UTC timestamp. Format: `YYYY-MM-DDTHH:mm:ss.sssZ`. When both `--created-after` and `--downloaded-after` are set, `--created-after` takes precedence.'
+    required: false
+    default: ''
+  downloaded-after:
+    description: 'Transfer only files last downloaded at or after this exact UTC timestamp. Format: `YYYY-MM-DDTHH:mm:ss.sssZ`. Files that were never downloaded are excluded. Ignored when `--created-after` is also set.'
+    required: false
+    default: ''
+  exclude-repos:
+    description: 'List of semicolon-separated (`;`) repositories to exclude from the transfer. You can use wildcards to specify patterns for the repositories'' names.'
+    required: false
+    default: ''
+  filestore:
+    description: 'Set to `true` to make the transfer mechanism check for the existence of artifacts on the target filestore. Used when the files are already expected to be located on the filestore.'
+    required: false
+    default: 'false'
+  format:
+    description: 'Defines the output format of the command. Acceptable values are: `json`, `table`.'
+    required: false
+    default: ''
+  ignore-state:
+    description: 'Set to `true` to ignore the saved state from previous `transfer-files` operations.'
+    required: false
+    default: 'false'
+  include-files:
+    description: 'List of semicolon-separated (`;`) path patterns to include in the transfer. Files will be filtered based on their directory path. Pattern examples: `folder/subfolder/*`, `org/company/*`.'
+    required: false
+    default: ''
+  include-repos:
+    description: 'List of semicolon-separated (`;`) repositories to include in the transfer. You can use wildcards to specify patterns for the repositories'' names.'
+    required: false
+    default: ''
+  prechecks:
+    description: 'Set to `true` to run pre-transfer checks.'
+    required: false
+    default: 'false'
+  proxy-key:
+    description: 'The key of an HTTP proxy configuration in Artifactory. This proxy will be used for the transfer traffic between the source and target instances. To configure this proxy, go to _"Proxies \| Configuration \| Proxy Configuration"_  in the JFrog Administration UI.'
+    required: false
+    default: ''
+  status:
+    description: 'Set to `true` to show the status of the `transfer-files` command currently in progress.'
+    required: false
+    default: 'false'
+  stop:
+    description: 'Set to `true` to stop the `transfer-files` command currently in progress. Useful when running the `transfer-files` command in the background.'
+    required: false
+    default: 'false'
+  shell:
+    description: 'Shell to use for run steps. Acceptable values are: `bash`, `powershell`, `pwsh`.'
+    required: false
+    default: 'bash'
+  is-test:
+    description: 'Indicates if the action is tested.'
+    required: false
+    default: 'false'
+
+outputs:
+  command:
+    description: The JFrog command
+    value: ${{ steps.run_bash.outputs.command || steps.run_pwsh.outputs.command }}
+
+runs:
+  using: composite
+  steps:
+    - name: Run JFrog CLI command
+      id: run_bash
+      if: ${{ inputs.shell == 'bash' }}
+      shell: bash
+      env:
+        SOURCE_SERVER_ID: ${{ inputs.source-server-id }}
+        TARGET_SERVER_ID: ${{ inputs.target-server-id }}
+        CREATED_AFTER: ${{ inputs.created-after }}
+        DOWNLOADED_AFTER: ${{ inputs.downloaded-after }}
+        EXCLUDE_REPOS: ${{ inputs.exclude-repos }}
+        FILESTORE: ${{ inputs.filestore }}
+        FORMAT: ${{ inputs.format }}
+        IGNORE_STATE: ${{ inputs.ignore-state }}
+        INCLUDE_FILES: ${{ inputs.include-files }}
+        INCLUDE_REPOS: ${{ inputs.include-repos }}
+        PRECHECKS: ${{ inputs.prechecks }}
+        PROXY_KEY: ${{ inputs.proxy-key }}
+        STATUS: ${{ inputs.status }}
+        STOP: ${{ inputs.stop }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        arguments=(
+          'rt'
+          'transfer-files'
+          "$SOURCE_SERVER_ID"
+          "$TARGET_SERVER_ID"
+        )
+
+        if [[ -n "$CREATED_AFTER" ]]; then
+          arguments+=("--created-after=$CREATED_AFTER")
+        fi
+
+        if [[ -n "$DOWNLOADED_AFTER" ]]; then
+          arguments+=("--downloaded-after=$DOWNLOADED_AFTER")
+        fi
+
+        if [[ -n "$EXCLUDE_REPOS" ]]; then
+          arguments+=("--exclude-repos=$EXCLUDE_REPOS")
+        fi
+
+        if [[ "$FILESTORE" == 'true' ]]; then
+          arguments+=('--filestore')
+        fi
+
+        if [[ -n "$FORMAT" ]]; then
+          arguments+=("--format=$FORMAT")
+        fi
+
+        if [[ "$IGNORE_STATE" == 'true' ]]; then
+          arguments+=('--ignore-state')
+        fi
+
+        if [[ -n "$INCLUDE_FILES" ]]; then
+          arguments+=("--include-files=$INCLUDE_FILES")
+        fi
+
+        if [[ -n "$INCLUDE_REPOS" ]]; then
+          arguments+=("--include-repos=$INCLUDE_REPOS")
+        fi
+
+        if [[ "$PRECHECKS" == 'true' ]]; then
+          arguments+=('--prechecks')
+        fi
+
+        if [[ -n "$PROXY_KEY" ]]; then
+          arguments+=("--proxy-key=$PROXY_KEY")
+        fi
+
+        if [[ "$STATUS" == 'true' ]]; then
+          arguments+=('--status')
+        fi
+
+        if [[ "$STOP" == 'true' ]]; then
+          arguments+=('--stop')
+        fi
+
+        command='jf'
+        for argument in "${arguments[@]}"; do
+          printf -v escaped '%q' "$argument"
+          command+=" $escaped"
+        done
+
+        echo "Executing JFrog CLI Command:"
+        echo "$command"
+        echo "command=$command" >> "$GITHUB_OUTPUT"
+
+        if [[ "$IS_TEST" == 'false' ]]; then
+          jf "${arguments[@]}"
+        fi
+
+    - name: Run JFrog CLI command
+      id: run_pwsh
+      if: ${{ inputs.shell == 'powershell' || inputs.shell == 'pwsh' }}
+      shell: ${{ inputs.shell }}
+      env:
+        SOURCE_SERVER_ID: ${{ inputs.source-server-id }}
+        TARGET_SERVER_ID: ${{ inputs.target-server-id }}
+        CREATED_AFTER: ${{ inputs.created-after }}
+        DOWNLOADED_AFTER: ${{ inputs.downloaded-after }}
+        EXCLUDE_REPOS: ${{ inputs.exclude-repos }}
+        FILESTORE: ${{ inputs.filestore }}
+        FORMAT: ${{ inputs.format }}
+        IGNORE_STATE: ${{ inputs.ignore-state }}
+        INCLUDE_FILES: ${{ inputs.include-files }}
+        INCLUDE_REPOS: ${{ inputs.include-repos }}
+        PRECHECKS: ${{ inputs.prechecks }}
+        PROXY_KEY: ${{ inputs.proxy-key }}
+        STATUS: ${{ inputs.status }}
+        STOP: ${{ inputs.stop }}
+        IS_TEST: ${{ inputs.is-test }}
+      run: |
+        $arguments = @(
+          'rt'
+          'transfer-files'
+          "$env:SOURCE_SERVER_ID"
+          "$env:TARGET_SERVER_ID"
+        )
+
+        if (-not [string]::IsNullOrWhiteSpace($env:CREATED_AFTER)) {
+          $arguments += "--created-after=$env:CREATED_AFTER"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:DOWNLOADED_AFTER)) {
+          $arguments += "--downloaded-after=$env:DOWNLOADED_AFTER"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:EXCLUDE_REPOS)) {
+          $arguments += "--exclude-repos=$env:EXCLUDE_REPOS"
+        }
+
+        if ($env:FILESTORE -eq 'true') {
+          $arguments += '--filestore'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:FORMAT)) {
+          $arguments += "--format=$env:FORMAT"
+        }
+
+        if ($env:IGNORE_STATE -eq 'true') {
+          $arguments += '--ignore-state'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:INCLUDE_FILES)) {
+          $arguments += "--include-files=$env:INCLUDE_FILES"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:INCLUDE_REPOS)) {
+          $arguments += "--include-repos=$env:INCLUDE_REPOS"
+        }
+
+        if ($env:PRECHECKS -eq 'true') {
+          $arguments += '--prechecks'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($env:PROXY_KEY)) {
+          $arguments += "--proxy-key=$env:PROXY_KEY"
+        }
+
+        if ($env:STATUS -eq 'true') {
+          $arguments += '--status'
+        }
+
+        if ($env:STOP -eq 'true') {
+          $arguments += '--stop'
+        }
+
+        $command = "jf $($arguments -join ' ')"
+        $delimiter = [guid]::NewGuid().ToString()
+
+        @(
+          "command<<$delimiter"
+          $command
+          $delimiter
+        ) >> $env:GITHUB_OUTPUT
+
+        if ($env:IS_TEST -eq 'false') {
+          & jf @arguments
+        }
