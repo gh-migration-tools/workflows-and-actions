@@ -10,7 +10,6 @@ trim_trailing_whitespace = true
 
 # Markdown
 [*.{md,mdx}]
-indent_size = 2
 trim_trailing_whitespace = false
 
 # YML
