@@ -1,0 +1,54 @@
+# JFrog artifactory actions
+
+> [!WARNING]
+> The JFrog actions are **not** tested yet for the command execution. If you find any issues, please open an PR.
+
+| Name                                                                                                  | Description                                                                                                                     |
+| ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| [`jfrog-rt-build-add-dependencies`](rt/jfrog-rt-build-add-dependencies.md)         | Adds dependencies from the local file-system to the build info.                                                                 |
+| [`jfrog-rt-build-add-git`](rt/jfrog-rt-build-add-git.md)                           | Collects the Git revision and URL from the local `.git` directory and adds it to the build info.                                |
+| [`jfrog-rt-build-append`](rt/jfrog-rt-build-append.md)                             | Append published build to the build info.                                                                                       |
+| [`jfrog-rt-build-clean`](rt/jfrog-rt-build-clean.md)                               | Cleans (removes) build info collected locally.                                                                                  |
+| [`jfrog-rt-build-collect-env`](rt/jfrog-rt-build-collect-env.md)                   | Collect environment variables. Environment variables can be excluded using the `build-publish` command.                         |
+| [`jfrog-rt-build-discard`](rt/jfrog-rt-build-discard.md)                           | Discard builds by setting retention parameters.                                                                                 |
+| [`jfrog-rt-build-docker-create`](rt/jfrog-rt-build-docker-create.md)               | Add a published Docker image to the build info.                                                                                 |
+| [`jfrog-rt-build-promote`](rt/jfrog-rt-build-promote.md)                           | Promotes build in Artifactory.                                                                                                  |
+| [`jfrog-rt-build-publish`](rt/jfrog-rt-build-publish.md)                           | Publish build info.                                                                                                             |
+| [`jfrog-rt-copy`](rt/jfrog-rt-copy.md)                                             | Copy files between Artifactory paths.                                                                                           |
+| [`jfrog-rt-curl`](rt/jfrog-rt-curl.md)                                             | Execute a cURL command, using the configured Artifactory details.                                                               |
+| [`jfrog-rt-delete`](rt/jfrog-rt-delete.md)                                         | Delete files from Artifactory.                                                                                                  |
+| [`jfrog-rt-delete-props`](rt/jfrog-rt-delete-props.md)                             | Delete properties on existing files in Artifactory.                                                                             |
+| [`jfrog-rt-direct-download`](rt/jfrog-rt-direct-download.md)                       | Download files using direct API respecting Artifactory's native resolution order and bypassing AQL.                             |
+| [`jfrog-rt-docker-promote`](rt/jfrog-rt-docker-promote.md)                         | Promotes a Docker image from one repository to another.                                                                         |
+| [`jfrog-rt-download`](rt/jfrog-rt-download.md)                                     | Download files from Artifactory to local file system.                                                                           |
+| [`jfrog-rt-git-lfs-clean`](rt/jfrog-rt-git-lfs-clean.md)                           | Clean files from a Git LFS repository.                                                                                          |
+| [`jfrog-rt-group-add-users`](rt/jfrog-rt-group-add-users.md)                       | Add a list of users to a group.                                                                                                 |
+| [`jfrog-rt-group-create`](rt/jfrog-rt-group-create.md)                             | Create a new user group                                                                                                         |
+| [`jfrog-rt-group-delete`](rt/jfrog-rt-group-delete.md)                             | Delete a user group                                                                                                             |
+| [`jfrog-rt-move`](rt/jfrog-rt-move.md)                                             | Move files between Artifactory paths.                                                                                           |
+| [`jfrog-rt-nuget-deps-tree`](rt/jfrog-rt-nuget-deps-tree.md)                       | Show solution dependency tree.                                                                                                  |
+| [`jfrog-rt-permission-target-create`](rt/jfrog-rt-permission-target-create.md)     | Create a new permission target in the JFrog Platform.                                                                           |
+| [`jfrog-rt-permission-target-delete`](rt/jfrog-rt-permission-target-delete.md)     | Permanently delete a permission target.                                                                                         |
+| [`jfrog-rt-permission-target-template`](rt/jfrog-rt-permission-target-template.md) | Create a JSON template for a permission target creation or replacement.                                                         |
+| [`jfrog-rt-permission-target-update`](rt/jfrog-rt-permission-target-update.md)     | Update a permission target in the JFrog Platform.                                                                               |
+| [`jfrog-rt-ping`](rt/jfrog-rt-ping.md)                                             | Send applicative ping to Artifactory.                                                                                           |
+| [`jfrog-rt-podman-pull`](rt/jfrog-rt-podman-pull.md)                               | Podman pull.                                                                                                                    |
+| [`jfrog-rt-podman-push`](rt/jfrog-rt-podman-push.md)                               | Podman push.                                                                                                                    |
+| [`jfrog-rt-replication-create`](rt/jfrog-rt-replication-create.md)                 | Create a new replication in Artifactory.                                                                                        |
+| [`jfrog-rt-replication-delete`](rt/jfrog-rt-replication-delete.md)                 | Remove a replication repository from Artifactory.                                                                               |
+| [`jfrog-rt-replication-template`](rt/jfrog-rt-replication-template.md)             | Create a JSON template for creating a replication repository.                                                                   |
+| [`jfrog-rt-repo-create`](rt/jfrog-rt-repo-create.md)                               | Create a new repository in Artifactory.                                                                                         |
+| [`jfrog-rt-repo-delete`](rt/jfrog-rt-repo-delete.md)                               | Permanently delete repositories with all of their content from Artifactory.                                                     |
+| [`jfrog-rt-repo-template`](rt/jfrog-rt-repo-template.md)                           | Create a JSON template for repository creation or update.                                                                       |
+| [`jfrog-rt-repo-update`](rt/jfrog-rt-repo-update.md)                               | Update an existing repository configuration in Artifactory.                                                                     |
+| [`jfrog-rt-search`](rt/jfrog-rt-search.md)                                         | Search files in Artifactory.                                                                                                    |
+| [`jfrog-rt-set-props`](rt/jfrog-rt-set-props.md)                                   | Set properties on existing files in Artifactory.                                                                                |
+| [`jfrog-rt-transfer-config`](rt/jfrog-rt-transfer-config.md)                       | Copy the full configuration from a source Artifactory server to a target server                                                 |
+| [`jfrog-rt-transfer-config-merge`](rt/jfrog-rt-transfer-config-merge.md)           | Merge projects and repositories from a source Artifactory instance to a target Artifactory instance, if no conflicts are found. |
+| [`jfrog-rt-transfer-files`](rt/jfrog-rt-transfer-files.md)                         | Transfer files from one Artifactory to another.                                                                                 |
+| [`jfrog-rt-transfer-plugin-install`](rt/jfrog-rt-transfer-plugin-install.md)       | Download and install the data-transfer user plugin on the primary node of Artifactory, which is running on this local machine.  |
+| [`jfrog-rt-transfer-settings`](rt/jfrog-rt-transfer-settings.md)                   | Configure the settings for the `jf rt transfer-files` command.                                                                  |
+| [`jfrog-rt-upload`](rt/jfrog-rt-upload.md)                                         | Upload files from local file system to Artifactory.                                                                             |
+| [`jfrog-rt-user-create`](rt/jfrog-rt-user-create.md)                               | Create a new user.                                                                                                              |
+| [`jfrog-rt-users-create`](rt/jfrog-rt-users-create.md)                             | Create new users.                                                                                                               |
+| [`jfrog-rt-users-delete`](rt/jfrog-rt-users-delete.md)                             | Delete users.                                                                                                                   |
