@@ -4,8 +4,8 @@ The [`create-action`](../../../.github/actions/common/create-action/action.yml) 
 
 ## Inputs
 
-| Name      | Required | Default | Description                         |
-| --------- | -------- | ------- | ----------------------------------- |
+| Name      | Required | Default | Description               |
+| --------- | -------- | ------- | ------------------------- |
 | `name`    | yes      |         | The name of the action    |
 | `content` | yes      |         | The content of the action |
 

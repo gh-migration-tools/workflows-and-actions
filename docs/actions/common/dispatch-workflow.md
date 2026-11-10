@@ -12,27 +12,27 @@ The [`dispatch-workflow`](../../../.github/actions/common/dispatch-workflow/acti
 
 ## Inputs
 
-| Name | Required | Default | Description |
-| --- | --- | --- | --- |
-| `client-id` | yes |  | GitHub App client ID |
-| `private-key` | yes |  | GitHub App private key |
-| `api-url` | no | `https://api.github.com` | GitHub API URL |
-| `owner-repo` | yes |  | Repository name with owner |
-| `ref` | yes |  | The branch, tag or SHA |
-| `workflow-file` | yes |  | Workflow file name |
-| `payload-inputs-json` | no | `{}` | JSON object string passed as `workflow_dispatch` inputs |
-| `poll-interval-seconds` | no | `15` | Poll interval seconds |
+| Name                    | Required | Default                  | Description                                             |
+| ----------------------- | -------- | ------------------------ | ------------------------------------------------------- |
+| `client-id`             | yes      |                          | GitHub App client ID                                    |
+| `private-key`           | yes      |                          | GitHub App private key                                  |
+| `api-url`               | no       | `https://api.github.com` | GitHub API URL                                          |
+| `owner-repo`            | yes      |                          | Repository name with owner                              |
+| `ref`                   | yes      |                          | The branch, tag or SHA                                  |
+| `workflow-file`         | yes      |                          | Workflow file name                                      |
+| `payload-inputs-json`   | no       | `{}`                     | JSON object string passed as `workflow_dispatch` inputs |
+| `poll-interval-seconds` | no       | `15`                     | Poll interval seconds                                   |
 
 ## Outputs
 
-| Name | Description |
-| --- | --- |
-| `run-id` | The run ID |
-| `run-number` | The run number |
-| `run-name` | The run name |
-| `status` | The run status |
-| `conclusion` | The run conclusion |
-| `workflow-id` | The workflow ID |
+| Name          | Description        |
+| ------------- | ------------------ |
+| `run-id`      | The run ID         |
+| `run-number`  | The run number     |
+| `run-name`    | The run name       |
+| `status`      | The run status     |
+| `conclusion`  | The run conclusion |
+| `workflow-id` | The workflow ID    |
 
 ## Example
 

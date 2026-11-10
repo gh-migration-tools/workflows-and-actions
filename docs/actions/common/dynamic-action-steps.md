@@ -9,14 +9,14 @@ The [`dynamic-action-steps`](../../../.github/actions/common/dynamic-action-step
 
 | Name           | Required | Default | Description                      |
 | -------------- | :------: | ------- | -------------------------------- |
-| `steps`        | yes      |         | Steps to run                     |
-| `secrets_json` | no       | `{}`    | Secrets as a JSON object         |
-| `debug`        | no       | `false` | Show the generated GitHub action |
+| `steps`        |   yes    |         | Steps to run                     |
+| `secrets_json` |    no    | `{}`    | Secrets as a JSON object         |
+| `debug`        |    no    | `false` | Show the generated GitHub action |
 
 ## Outputs
 
 | Name      | Description                                           |
-| --------- | ------------------------------------------------------|
+| --------- | ----------------------------------------------------- |
 | `outputs` | JSON-ified outputs from the steps, keyed by step `id` |
 
 ## Examples

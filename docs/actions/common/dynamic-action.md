@@ -9,10 +9,10 @@ The [`dynamic-action`](../../../.github/actions/common/dynamic-action/action.yml
 
 | Name           | Required | Default | Description                      |
 | -------------- | :------: | ------- | -------------------------------- |
-| `uses`         | yes      |         | Action reference or path         |
-| `with`         | no       | `{}`    | YAML or JSON string of inputs    |
-| `secrets_json` | no       | `{}`    | Secrets as a JSON object         |
-| `debug`        | no       | `false` | Show the generated GitHub action |
+| `uses`         |   yes    |         | Action reference or path         |
+| `with`         |    no    | `{}`    | YAML or JSON string of inputs    |
+| `secrets_json` |    no    | `{}`    | Secrets as a JSON object         |
+| `debug`        |    no    | `false` | Show the generated GitHub action |
 
 ## Outputs
 
