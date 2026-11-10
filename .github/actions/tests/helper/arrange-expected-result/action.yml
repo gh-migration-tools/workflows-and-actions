@@ -1,0 +1,36 @@
+name: Arrange expected result
+description: Arrange expected result
+
+inputs:
+  shell:
+    description: shell
+    required: true
+  expected-result-bash:
+    description: expected-result-bash
+    required: true
+  expected-result-pwsh:
+    description: expected-result-pwsh
+    required: true
+
+outputs:
+  expected-result:
+    description: expected-result
+    value: ${{ steps.arrange.outputs.expected_result }}
+
+runs:
+  using: composite
+  steps:
+    - name: Arrange
+      id: arrange
+      shell: bash
+      env:
+        SHELL: ${{ inputs.shell }}
+        EXPECTED_RESULT_BASH: ${{ inputs.expected-result-bash }}
+        EXPECTED_RESULT_PWSH: ${{ inputs.expected-result-pwsh }}
+      run: |
+        case "$SHELL" in
+          bash) expected_result="$EXPECTED_RESULT_BASH" ;;
+          pwsh) expected_result="$EXPECTED_RESULT_PWSH" ;;
+        esac
+
+        echo "expected_result=$expected_result" >> "$GITHUB_OUTPUT"

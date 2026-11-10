@@ -1,0 +1,47 @@
+name: Tests action 'jfrog-rt-transfer-files'
+
+on:
+  workflow_call:
+
+jobs:
+  should_return_command:
+    name: Should return command (${{ matrix.shell }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shell: [bash, pwsh]
+    steps:
+      - name: Arrange
+        id: arrange
+        uses: $/.github/actions/tests/helper/arrange-expected-result
+        with:
+          shell: ${{ matrix.shell }}
+          expected-result-bash: jf rt transfer-files \[SOURCE-SERVER-ID\] \[TARGET-SERVER-ID\] --created-after=CREATED-AFTER --downloaded-after=DOWNLOADED-AFTER --exclude-repos=EXCLUDE-REPOS --filestore --format=FORMAT --ignore-state --include-files=INCLUDE-FILES --include-repos=INCLUDE-REPOS --prechecks --proxy-key=PROXY-KEY --status --stop
+          expected-result-pwsh: jf rt transfer-files [SOURCE-SERVER-ID] [TARGET-SERVER-ID] --created-after=CREATED-AFTER --downloaded-after=DOWNLOADED-AFTER --exclude-repos=EXCLUDE-REPOS --filestore --format=FORMAT --ignore-state --include-files=INCLUDE-FILES --include-repos=INCLUDE-REPOS --prechecks --proxy-key=PROXY-KEY --status --stop
+
+      - name: Act
+        id: act
+        uses: $/.github/actions/jfrog/rt/jfrog-rt-transfer-files
+        with:
+          source-server-id: '[SOURCE-SERVER-ID]'
+          target-server-id: '[TARGET-SERVER-ID]'
+          created-after: 'CREATED-AFTER'
+          downloaded-after: 'DOWNLOADED-AFTER'
+          exclude-repos: 'EXCLUDE-REPOS'
+          filestore: 'true'
+          format: 'FORMAT'
+          ignore-state: 'true'
+          include-files: 'INCLUDE-FILES'
+          include-repos: 'INCLUDE-REPOS'
+          prechecks: 'true'
+          proxy-key: 'PROXY-KEY'
+          status: 'true'
+          stop: 'true'
+          shell: ${{ matrix.shell }}
+          is-test: 'true'
+
+      - name: Assert
+        uses: $/.github/actions/tests/helper/assert-result
+        with:
+          result: ${{ steps.act.outputs.command }}
+          expected-result: ${{ steps.arrange.outputs.expected-result }}

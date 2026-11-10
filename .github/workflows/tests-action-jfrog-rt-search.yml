@@ -1,0 +1,109 @@
+name: Tests action 'jfrog-rt-search'
+
+on:
+  workflow_call:
+
+jobs:
+  should_return_command:
+    name: Should return command (${{ matrix.shell }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shell: [bash, pwsh]
+    steps:
+      - name: Arrange
+        id: arrange
+        uses: $/.github/actions/tests/helper/arrange-expected-result
+        with:
+          shell: ${{ matrix.shell }}
+          expected-result-bash: jf rt search \[SEARCH-PATTERN\] --format=FORMAT --access-token=ACCESS-TOKEN --archive-entries=ARCHIVE-ENTRIES --build=BUILD --bundle=BUNDLE --client-cert-key-path=CLIENT-CERT-KEY-PATH --client-cert-path=CLIENT-CERT-PATH --count --exclude-artifacts=EXCLUDE-ARTIFACTS --exclude-props=EXCLUDE-PROPS --exclusions=EXCLUSIONS --fail-no-op --include=INCLUDE --include-deps=INCLUDE-DEPS --include-dirs --insecure-tls --limit=LIMIT --offset=OFFSET --password=PASSWORD --project=PROJECT --props=PROPS --recursive --retries=RETRIES --retry-wait-time=RETRY-WAIT-TIME --server-id=SERVER-ID --sort-by=SORT-BY --sort-order=SORT-ORDER --spec=SPEC --spec-vars=SPEC-VARS --ssh-key-path=SSH-KEY-PATH --ssh-passphrase=SSH-PASSPHRASE --transitive --url=URL --user=USER
+          expected-result-pwsh: jf rt search [SEARCH-PATTERN] --format=FORMAT --access-token=ACCESS-TOKEN --archive-entries=ARCHIVE-ENTRIES --build=BUILD --bundle=BUNDLE --client-cert-key-path=CLIENT-CERT-KEY-PATH --client-cert-path=CLIENT-CERT-PATH --count --exclude-artifacts=EXCLUDE-ARTIFACTS --exclude-props=EXCLUDE-PROPS --exclusions=EXCLUSIONS --fail-no-op --include=INCLUDE --include-deps=INCLUDE-DEPS --include-dirs --insecure-tls --limit=LIMIT --offset=OFFSET --password=PASSWORD --project=PROJECT --props=PROPS --recursive --retries=RETRIES --retry-wait-time=RETRY-WAIT-TIME --server-id=SERVER-ID --sort-by=SORT-BY --sort-order=SORT-ORDER --spec=SPEC --spec-vars=SPEC-VARS --ssh-key-path=SSH-KEY-PATH --ssh-passphrase=SSH-PASSPHRASE --transitive --url=URL --user=USER
+
+      - name: Act
+        id: act
+        uses: $/.github/actions/jfrog/rt/jfrog-rt-search
+        with:
+          search-pattern: '[SEARCH-PATTERN]'
+          format: 'FORMAT'
+          access-token: 'ACCESS-TOKEN'
+          archive-entries: 'ARCHIVE-ENTRIES'
+          build: 'BUILD'
+          bundle: 'BUNDLE'
+          client-cert-key-path: 'CLIENT-CERT-KEY-PATH'
+          client-cert-path: 'CLIENT-CERT-PATH'
+          count: 'true'
+          exclude-artifacts: 'EXCLUDE-ARTIFACTS'
+          exclude-props: 'EXCLUDE-PROPS'
+          exclusions: 'EXCLUSIONS'
+          fail-no-op: 'true'
+          include: 'INCLUDE'
+          include-deps: 'INCLUDE-DEPS'
+          include-dirs: 'true'
+          insecure-tls: 'true'
+          limit: 'LIMIT'
+          offset: 'OFFSET'
+          password: 'PASSWORD'
+          project: 'PROJECT'
+          props: 'PROPS'
+          recursive: 'true'
+          retries: 'RETRIES'
+          retry-wait-time: 'RETRY-WAIT-TIME'
+          server-id: 'SERVER-ID'
+          sort-by: 'SORT-BY'
+          sort-order: 'SORT-ORDER'
+          spec: 'SPEC'
+          spec-vars: 'SPEC-VARS'
+          ssh-key-path: 'SSH-KEY-PATH'
+          ssh-passphrase: 'SSH-PASSPHRASE'
+          transitive: 'true'
+          url: 'URL'
+          user: 'USER'
+          shell: ${{ matrix.shell }}
+          is-test: 'true'
+
+      - name: Assert
+        uses: $/.github/actions/tests/helper/assert-result
+        with:
+          result: ${{ steps.act.outputs.command }}
+          expected-result: ${{ steps.arrange.outputs.expected-result }}
+
+  should_create_spec_file:
+    name: Should create spec file (${{ matrix.shell }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shell: [bash, pwsh]
+    steps:
+      - name: Arrange
+        id: arrange
+        uses: $/.github/actions/tests/helper/arrange-expected-result
+        with:
+          shell: ${{ matrix.shell }}
+          expected-result-bash: jf rt search \[SEARCH-PATTERN\] --spec=spec.json
+          expected-result-pwsh: jf rt search [SEARCH-PATTERN] --spec=spec.json
+
+      - name: Act
+        id: act
+        uses: $/.github/actions/jfrog/rt/jfrog-rt-search
+        with:
+          search-pattern: '[SEARCH-PATTERN]'
+          spec-json: |
+            {
+              "files": []
+            }
+          shell: ${{ matrix.shell }}
+          is-test: 'true'
+
+      - name: Assert
+        uses: $/.github/actions/tests/helper/assert-result
+        with:
+          result: ${{ steps.act.outputs.command }}
+          expected-result: ${{ steps.arrange.outputs.expected-result }}
+
+      - name: Assert 'specs.json' file
+        shell: bash
+        run: |
+          if [[ ! -f 'spec.json' ]]; then
+            echo 'spec.json was not found' >&2
+            exit 1
+          fi

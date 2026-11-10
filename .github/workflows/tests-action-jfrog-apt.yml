@@ -1,0 +1,45 @@
+name: Tests action 'jfrog-apt'
+
+on:
+  workflow_call:
+
+jobs:
+  should_return_command:
+    name: Should return command (${{ matrix.shell }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shell: [bash, pwsh]
+    steps:
+      - name: Arrange
+        id: arrange
+        uses: $/.github/actions/tests/helper/arrange-expected-result
+        with:
+          shell: ${{ matrix.shell }}
+          expected-result-bash: jf apt \[COMMAND\] \[ARGS\] --build-name=BUILD-NAME --build-number=BUILD-NUMBER --component=COMPONENT --dist=DIST --module=MODULE --project=PROJECT --repo=REPO --server-id=SERVER-ID --skip-login --trusted
+          expected-result-pwsh: jf apt [COMMAND] [ARGS] --build-name=BUILD-NAME --build-number=BUILD-NUMBER --component=COMPONENT --dist=DIST --module=MODULE --project=PROJECT --repo=REPO --server-id=SERVER-ID --skip-login --trusted
+
+      - name: Act
+        id: act
+        uses: $/.github/actions/jfrog/package-managers/jfrog-apt
+        with:
+          command: '[COMMAND]'
+          args: '[ARGS]'
+          build-name: 'BUILD-NAME'
+          build-number: 'BUILD-NUMBER'
+          component: 'COMPONENT'
+          dist: 'DIST'
+          module: 'MODULE'
+          project: 'PROJECT'
+          repo: 'REPO'
+          server-id: 'SERVER-ID'
+          skip-login: 'true'
+          trusted: 'true'
+          shell: ${{ matrix.shell }}
+          is-test: 'true'
+
+      - name: Assert
+        uses: $/.github/actions/tests/helper/assert-result
+        with:
+          result: ${{ steps.act.outputs.command }}
+          expected-result: ${{ steps.arrange.outputs.expected-result }}

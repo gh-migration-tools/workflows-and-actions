@@ -1,0 +1,116 @@
+name: Tests action 'jfrog-rt-upload'
+
+on:
+  workflow_call:
+
+jobs:
+  should_return_command:
+    name: Should return command (${{ matrix.shell }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shell: [bash, pwsh]
+    steps:
+      - name: Arrange
+        id: arrange
+        uses: $/.github/actions/tests/helper/arrange-expected-result
+        with:
+          shell: ${{ matrix.shell }}
+          expected-result-bash: jf rt upload \[SOURCE-PATTERN\] \[TARGET-PATTERN\] --format=FORMAT --access-token=ACCESS-TOKEN --ant --archive=ARCHIVE --build-name=BUILD-NAME --build-number=BUILD-NUMBER --chunk-size=CHUNK-SIZE --client-cert-key-path=CLIENT-CERT-KEY-PATH --client-cert-path=CLIENT-CERT-PATH --deb=DEB --detailed-summary --dry-run --exclusions=EXCLUSIONS --explode --fail-no-op --flat --include-dirs --insecure-tls --min-split=MIN-SPLIT --module=MODULE --password=PASSWORD --project=PROJECT --quiet --recursive --regexp --retries=RETRIES --retry-wait-time=RETRY-WAIT-TIME --server-id=SERVER-ID --spec=SPEC --spec-vars=SPEC-VARS --split-count=SPLIT-COUNT --ssh-key-path=SSH-KEY-PATH --ssh-passphrase=SSH-PASSPHRASE --symlinks --sync-deletes=SYNC-DELETES --target-props=TARGET-PROPS --threads=THREADS --url=URL --user=USER
+          expected-result-pwsh: jf rt upload [SOURCE-PATTERN] [TARGET-PATTERN] --format=FORMAT --access-token=ACCESS-TOKEN --ant --archive=ARCHIVE --build-name=BUILD-NAME --build-number=BUILD-NUMBER --chunk-size=CHUNK-SIZE --client-cert-key-path=CLIENT-CERT-KEY-PATH --client-cert-path=CLIENT-CERT-PATH --deb=DEB --detailed-summary --dry-run --exclusions=EXCLUSIONS --explode --fail-no-op --flat --include-dirs --insecure-tls --min-split=MIN-SPLIT --module=MODULE --password=PASSWORD --project=PROJECT --quiet --recursive --regexp --retries=RETRIES --retry-wait-time=RETRY-WAIT-TIME --server-id=SERVER-ID --spec=SPEC --spec-vars=SPEC-VARS --split-count=SPLIT-COUNT --ssh-key-path=SSH-KEY-PATH --ssh-passphrase=SSH-PASSPHRASE --symlinks --sync-deletes=SYNC-DELETES --target-props=TARGET-PROPS --threads=THREADS --url=URL --user=USER
+
+      - name: Act
+        id: act
+        uses: $/.github/actions/jfrog/rt/jfrog-rt-upload
+        with:
+          source-pattern: '[SOURCE-PATTERN]'
+          target-pattern: '[TARGET-PATTERN]'
+          format: 'FORMAT'
+          access-token: 'ACCESS-TOKEN'
+          ant: 'true'
+          archive: 'ARCHIVE'
+          build-name: 'BUILD-NAME'
+          build-number: 'BUILD-NUMBER'
+          chunk-size: 'CHUNK-SIZE'
+          client-cert-key-path: 'CLIENT-CERT-KEY-PATH'
+          client-cert-path: 'CLIENT-CERT-PATH'
+          deb: 'DEB'
+          detailed-summary: 'true'
+          dry-run: 'true'
+          exclusions: 'EXCLUSIONS'
+          explode: 'true'
+          fail-no-op: 'true'
+          flat: 'true'
+          include-dirs: 'true'
+          insecure-tls: 'true'
+          min-split: 'MIN-SPLIT'
+          module: 'MODULE'
+          password: 'PASSWORD'
+          project: 'PROJECT'
+          quiet: 'true'
+          recursive: 'true'
+          regexp: 'true'
+          retries: 'RETRIES'
+          retry-wait-time: 'RETRY-WAIT-TIME'
+          server-id: 'SERVER-ID'
+          spec: 'SPEC'
+          spec-vars: 'SPEC-VARS'
+          split-count: 'SPLIT-COUNT'
+          ssh-key-path: 'SSH-KEY-PATH'
+          ssh-passphrase: 'SSH-PASSPHRASE'
+          symlinks: 'true'
+          sync-deletes: 'SYNC-DELETES'
+          target-props: 'TARGET-PROPS'
+          threads: 'THREADS'
+          url: 'URL'
+          user: 'USER'
+          shell: ${{ matrix.shell }}
+          is-test: 'true'
+
+      - name: Assert
+        uses: $/.github/actions/tests/helper/assert-result
+        with:
+          result: ${{ steps.act.outputs.command }}
+          expected-result: ${{ steps.arrange.outputs.expected-result }}
+
+  should_create_spec_file:
+    name: Should create spec file (${{ matrix.shell }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shell: [bash, pwsh]
+    steps:
+      - name: Arrange
+        id: arrange
+        uses: $/.github/actions/tests/helper/arrange-expected-result
+        with:
+          shell: ${{ matrix.shell }}
+          expected-result-bash: jf rt upload \[SOURCE-PATTERN\] \[TARGET-PATTERN\] --spec=spec.json
+          expected-result-pwsh: jf rt upload [SOURCE-PATTERN] [TARGET-PATTERN] --spec=spec.json
+
+      - name: Act
+        id: act
+        uses: $/.github/actions/jfrog/rt/jfrog-rt-upload
+        with:
+          source-pattern: '[SOURCE-PATTERN]'
+          target-pattern: '[TARGET-PATTERN]'
+          spec-json: |
+            {
+              "files": []
+            }
+          shell: ${{ matrix.shell }}
+          is-test: 'true'
+
+      - name: Assert
+        uses: $/.github/actions/tests/helper/assert-result
+        with:
+          result: ${{ steps.act.outputs.command }}
+          expected-result: ${{ steps.arrange.outputs.expected-result }}
+
+      - name: Assert 'specs.json' file
+        shell: bash
+        run: |
+          if [[ ! -f 'spec.json' ]]; then
+            echo 'spec.json was not found' >&2
+            exit 1
+          fi

@@ -1,0 +1,36 @@
+name: Tests action 'jfrog-rt-ping'
+
+on:
+  workflow_call:
+
+jobs:
+  should_return_command:
+    name: Should return command (${{ matrix.shell }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shell: [bash, pwsh]
+    steps:
+      - name: Act
+        id: act
+        uses: $/.github/actions/jfrog/rt/jfrog-rt-ping
+        with:
+          format: 'FORMAT'
+          access-token: 'ACCESS-TOKEN'
+          client-cert-key-path: 'CLIENT-CERT-KEY-PATH'
+          client-cert-path: 'CLIENT-CERT-PATH'
+          insecure-tls: 'true'
+          password: 'PASSWORD'
+          server-id: 'SERVER-ID'
+          ssh-key-path: 'SSH-KEY-PATH'
+          ssh-passphrase: 'SSH-PASSPHRASE'
+          url: 'URL'
+          user: 'USER'
+          shell: ${{ matrix.shell }}
+          is-test: 'true'
+
+      - name: Assert
+        uses: $/.github/actions/tests/helper/assert-result
+        with:
+          result: ${{ steps.act.outputs.command }}
+          expected-result: jf rt ping --format=FORMAT --access-token=ACCESS-TOKEN --client-cert-key-path=CLIENT-CERT-KEY-PATH --client-cert-path=CLIENT-CERT-PATH --insecure-tls --password=PASSWORD --server-id=SERVER-ID --ssh-key-path=SSH-KEY-PATH --ssh-passphrase=SSH-PASSPHRASE --url=URL --user=USER

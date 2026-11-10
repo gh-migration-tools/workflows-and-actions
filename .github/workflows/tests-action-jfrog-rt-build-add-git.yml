@@ -1,0 +1,39 @@
+name: Tests action 'jfrog-rt-build-add-git'
+
+on:
+  workflow_call:
+
+jobs:
+  should_return_command:
+    name: Should return command (${{ matrix.shell }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shell: [bash, pwsh]
+    steps:
+      - name: Arrange
+        id: arrange
+        uses: $/.github/actions/tests/helper/arrange-expected-result
+        with:
+          shell: ${{ matrix.shell }}
+          expected-result-bash: jf rt build-add-git \[BUILD-NAME\] \[BUILD-NUMBER\] \[PATH-TO-GIT\] --config=CONFIG --project=PROJECT --server-id=SERVER-ID
+          expected-result-pwsh: jf rt build-add-git [BUILD-NAME] [BUILD-NUMBER] [PATH-TO-GIT] --config=CONFIG --project=PROJECT --server-id=SERVER-ID
+
+      - name: Act
+        id: act
+        uses: $/.github/actions/jfrog/rt/jfrog-rt-build-add-git
+        with:
+          build-name: '[BUILD-NAME]'
+          build-number: '[BUILD-NUMBER]'
+          path-to-git: '[PATH-TO-GIT]'
+          config: 'CONFIG'
+          project: 'PROJECT'
+          server-id: 'SERVER-ID'
+          shell: ${{ matrix.shell }}
+          is-test: 'true'
+
+      - name: Assert
+        uses: $/.github/actions/tests/helper/assert-result
+        with:
+          result: ${{ steps.act.outputs.command }}
+          expected-result: ${{ steps.arrange.outputs.expected-result }}

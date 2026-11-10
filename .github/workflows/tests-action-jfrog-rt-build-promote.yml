@@ -1,0 +1,54 @@
+name: Tests action 'jfrog-rt-build-promote'
+
+on:
+  workflow_call:
+
+jobs:
+  should_return_command:
+    name: Should return command (${{ matrix.shell }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shell: [bash, pwsh]
+    steps:
+      - name: Arrange
+        id: arrange
+        uses: $/.github/actions/tests/helper/arrange-expected-result
+        with:
+          shell: ${{ matrix.shell }}
+          expected-result-bash: jf rt build-promote \[BUILD-NAME\] \[BUILD-NUMBER\] \[TARGET-REPOSITORY\] --format=FORMAT --access-token=ACCESS-TOKEN --comment=COMMENT --copy --dry-run --fail-fast --include-dependencies --insecure-tls --password=PASSWORD --project=PROJECT --props=PROPS --server-id=SERVER-ID --source-repo=SOURCE-REPO --ssh-key-path=SSH-KEY-PATH --ssh-passphrase=SSH-PASSPHRASE --status=STATUS --url=URL --user=USER
+          expected-result-pwsh: jf rt build-promote [BUILD-NAME] [BUILD-NUMBER] [TARGET-REPOSITORY] --format=FORMAT --access-token=ACCESS-TOKEN --comment=COMMENT --copy --dry-run --fail-fast --include-dependencies --insecure-tls --password=PASSWORD --project=PROJECT --props=PROPS --server-id=SERVER-ID --source-repo=SOURCE-REPO --ssh-key-path=SSH-KEY-PATH --ssh-passphrase=SSH-PASSPHRASE --status=STATUS --url=URL --user=USER
+
+      - name: Act
+        id: act
+        uses: $/.github/actions/jfrog/rt/jfrog-rt-build-promote
+        with:
+          build-name: '[BUILD-NAME]'
+          build-number: '[BUILD-NUMBER]'
+          target-repository: '[TARGET-REPOSITORY]'
+          format: 'FORMAT'
+          access-token: 'ACCESS-TOKEN'
+          comment: 'COMMENT'
+          copy: 'true'
+          dry-run: 'true'
+          fail-fast: 'true'
+          include-dependencies: 'true'
+          insecure-tls: 'true'
+          password: 'PASSWORD'
+          project: 'PROJECT'
+          props: 'PROPS'
+          server-id: 'SERVER-ID'
+          source-repo: 'SOURCE-REPO'
+          ssh-key-path: 'SSH-KEY-PATH'
+          ssh-passphrase: 'SSH-PASSPHRASE'
+          status: 'STATUS'
+          url: 'URL'
+          user: 'USER'
+          shell: ${{ matrix.shell }}
+          is-test: 'true'
+
+      - name: Assert
+        uses: $/.github/actions/tests/helper/assert-result
+        with:
+          result: ${{ steps.act.outputs.command }}
+          expected-result: ${{ steps.arrange.outputs.expected-result }}

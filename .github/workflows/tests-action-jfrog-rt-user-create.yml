@@ -1,0 +1,45 @@
+name: Tests action 'jfrog-rt-user-create'
+
+on:
+  workflow_call:
+
+jobs:
+  should_return_command:
+    name: Should return command (${{ matrix.shell }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shell: [bash, pwsh]
+    steps:
+      - name: Arrange
+        id: arrange
+        uses: $/.github/actions/tests/helper/arrange-expected-result
+        with:
+          shell: ${{ matrix.shell }}
+          expected-result-bash: jf rt user-create \[USERNAME\] \[PASSWORD\] \[EMAIL\] --access-token=ACCESS-TOKEN --admin --replace --server-id=SERVER-ID --ssh-key-path=SSH-KEY-PATH --ssh-passphrase=SSH-PASSPHRASE --url=URL --user=USER --users-groups=USERS-GROUPS
+          expected-result-pwsh: jf rt user-create [USERNAME] [PASSWORD] [EMAIL] --access-token=ACCESS-TOKEN --admin --replace --server-id=SERVER-ID --ssh-key-path=SSH-KEY-PATH --ssh-passphrase=SSH-PASSPHRASE --url=URL --user=USER --users-groups=USERS-GROUPS
+
+      - name: Act
+        id: act
+        uses: $/.github/actions/jfrog/rt/jfrog-rt-user-create
+        with:
+          username: '[USERNAME]'
+          password: '[PASSWORD]'
+          email: '[EMAIL]'
+          access-token: 'ACCESS-TOKEN'
+          admin: 'true'
+          replace: 'true'
+          server-id: 'SERVER-ID'
+          ssh-key-path: 'SSH-KEY-PATH'
+          ssh-passphrase: 'SSH-PASSPHRASE'
+          url: 'URL'
+          user: 'USER'
+          users-groups: 'USERS-GROUPS'
+          shell: ${{ matrix.shell }}
+          is-test: 'true'
+
+      - name: Assert
+        uses: $/.github/actions/tests/helper/assert-result
+        with:
+          result: ${{ steps.act.outputs.command }}
+          expected-result: ${{ steps.arrange.outputs.expected-result }}

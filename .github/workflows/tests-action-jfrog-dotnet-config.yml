@@ -1,0 +1,29 @@
+name: Tests action 'jfrog-dotnet-config'
+
+on:
+  workflow_call:
+
+jobs:
+  should_return_command:
+    name: Should return command (${{ matrix.shell }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shell: [bash, pwsh]
+    steps:
+      - name: Act
+        id: act
+        uses: $/.github/actions/jfrog/package-managers/jfrog-dotnet-config
+        with:
+          global: 'true'
+          nuget-v2: 'true'
+          repo-resolve: 'REPO-RESOLVE'
+          server-id-resolve: 'SERVER-ID-RESOLVE'
+          shell: ${{ matrix.shell }}
+          is-test: 'true'
+
+      - name: Assert
+        uses: $/.github/actions/tests/helper/assert-result
+        with:
+          result: ${{ steps.act.outputs.command }}
+          expected-result: jf dotnet-config --global --nuget-v2 --repo-resolve=REPO-RESOLVE --server-id-resolve=SERVER-ID-RESOLVE

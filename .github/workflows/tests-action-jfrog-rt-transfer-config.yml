@@ -1,0 +1,43 @@
+name: Tests action 'jfrog-rt-transfer-config'
+
+on:
+  workflow_call:
+
+jobs:
+  should_return_command:
+    name: Should return command (${{ matrix.shell }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shell: [bash, pwsh]
+    steps:
+      - name: Arrange
+        id: arrange
+        uses: $/.github/actions/tests/helper/arrange-expected-result
+        with:
+          shell: ${{ matrix.shell }}
+          expected-result-bash: jf rt transfer-config \[SOURCE-SERVER-ID\] \[TARGET-SERVER-ID\] --exclude-repos=EXCLUDE-REPOS --force --format=FORMAT --include-repos=INCLUDE-REPOS --prechecks --source-working-dir=SOURCE-WORKING-DIR --target-working-dir=TARGET-WORKING-DIR --verbose
+          expected-result-pwsh: jf rt transfer-config [SOURCE-SERVER-ID] [TARGET-SERVER-ID] --exclude-repos=EXCLUDE-REPOS --force --format=FORMAT --include-repos=INCLUDE-REPOS --prechecks --source-working-dir=SOURCE-WORKING-DIR --target-working-dir=TARGET-WORKING-DIR --verbose
+
+      - name: Act
+        id: act
+        uses: $/.github/actions/jfrog/rt/jfrog-rt-transfer-config
+        with:
+          source-server-id: '[SOURCE-SERVER-ID]'
+          target-server-id: '[TARGET-SERVER-ID]'
+          exclude-repos: 'EXCLUDE-REPOS'
+          force: 'true'
+          format: 'FORMAT'
+          include-repos: 'INCLUDE-REPOS'
+          prechecks: 'true'
+          source-working-dir: 'SOURCE-WORKING-DIR'
+          target-working-dir: 'TARGET-WORKING-DIR'
+          verbose: 'true'
+          shell: ${{ matrix.shell }}
+          is-test: 'true'
+
+      - name: Assert
+        uses: $/.github/actions/tests/helper/assert-result
+        with:
+          result: ${{ steps.act.outputs.command }}
+          expected-result: ${{ steps.arrange.outputs.expected-result }}

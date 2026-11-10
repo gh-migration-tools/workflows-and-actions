@@ -1,0 +1,49 @@
+name: Tests action 'jfrog-rt-build-discard'
+
+on:
+  workflow_call:
+
+jobs:
+  should_return_command:
+    name: Should return command (${{ matrix.shell }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shell: [bash, pwsh]
+    steps:
+      - name: Arrange
+        id: arrange
+        uses: $/.github/actions/tests/helper/arrange-expected-result
+        with:
+          shell: ${{ matrix.shell }}
+          expected-result-bash: jf rt build-discard \[BUILD-NAME\] --format=FORMAT --access-token=ACCESS-TOKEN --async --delete-artifacts --exclude-builds=EXCLUDE-BUILDS --insecure-tls --max-builds=MAX-BUILDS --max-days=MAX-DAYS --password=PASSWORD --project=PROJECT --server-id=SERVER-ID --ssh-key-path=SSH-KEY-PATH --ssh-passphrase=SSH-PASSPHRASE --url=URL --user=USER
+          expected-result-pwsh: jf rt build-discard [BUILD-NAME] --format=FORMAT --access-token=ACCESS-TOKEN --async --delete-artifacts --exclude-builds=EXCLUDE-BUILDS --insecure-tls --max-builds=MAX-BUILDS --max-days=MAX-DAYS --password=PASSWORD --project=PROJECT --server-id=SERVER-ID --ssh-key-path=SSH-KEY-PATH --ssh-passphrase=SSH-PASSPHRASE --url=URL --user=USER
+
+      - name: Act
+        id: act
+        uses: $/.github/actions/jfrog/rt/jfrog-rt-build-discard
+        with:
+          build-name: '[BUILD-NAME]'
+          format: 'FORMAT'
+          access-token: 'ACCESS-TOKEN'
+          async: 'true'
+          delete-artifacts: 'true'
+          exclude-builds: 'EXCLUDE-BUILDS'
+          insecure-tls: 'true'
+          max-builds: 'MAX-BUILDS'
+          max-days: 'MAX-DAYS'
+          password: 'PASSWORD'
+          project: 'PROJECT'
+          server-id: 'SERVER-ID'
+          ssh-key-path: 'SSH-KEY-PATH'
+          ssh-passphrase: 'SSH-PASSPHRASE'
+          url: 'URL'
+          user: 'USER'
+          shell: ${{ matrix.shell }}
+          is-test: 'true'
+
+      - name: Assert
+        uses: $/.github/actions/tests/helper/assert-result
+        with:
+          result: ${{ steps.act.outputs.command }}
+          expected-result: ${{ steps.arrange.outputs.expected-result }}

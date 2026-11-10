@@ -1,0 +1,30 @@
+name: Tests action 'jfrog-go-config'
+
+on:
+  workflow_call:
+
+jobs:
+  should_return_command:
+    name: Should return command (${{ matrix.shell }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shell: [bash, pwsh]
+    steps:
+      - name: Act
+        id: act
+        uses: $/.github/actions/jfrog/package-managers/jfrog-go-config
+        with:
+          global: 'true'
+          repo-deploy: 'REPO-DEPLOY'
+          repo-resolve: 'REPO-RESOLVE'
+          server-id-deploy: 'SERVER-ID-DEPLOY'
+          server-id-resolve: 'SERVER-ID-RESOLVE'
+          shell: ${{ matrix.shell }}
+          is-test: 'true'
+
+      - name: Assert
+        uses: $/.github/actions/tests/helper/assert-result
+        with:
+          result: ${{ steps.act.outputs.command }}
+          expected-result: jf go-config --global --repo-deploy=REPO-DEPLOY --repo-resolve=REPO-RESOLVE --server-id-deploy=SERVER-ID-DEPLOY --server-id-resolve=SERVER-ID-RESOLVE

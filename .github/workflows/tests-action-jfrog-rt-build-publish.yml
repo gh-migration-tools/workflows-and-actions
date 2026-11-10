@@ -1,0 +1,56 @@
+name: Tests action 'jfrog-rt-build-publish'
+
+on:
+  workflow_call:
+
+jobs:
+  should_return_command:
+    name: Should return command (${{ matrix.shell }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shell: [bash, pwsh]
+    steps:
+      - name: Arrange
+        id: arrange
+        uses: $/.github/actions/tests/helper/arrange-expected-result
+        with:
+          shell: ${{ matrix.shell }}
+          expected-result-bash: jf rt build-publish \[BUILD-NAME\] \[BUILD-NUMBER\] --format=FORMAT --access-token=ACCESS-TOKEN --build-url=BUILD-URL --collect-env --collect-git-info --dep-exclude-scopes=DEP-EXCLUDE-SCOPES --detailed-summary --dot-git-path=DOT-GIT-PATH --dry-run --env-exclude=ENV-EXCLUDE --env-include=ENV-INCLUDE --git-config-file-path=GIT-CONFIG-FILE-PATH --insecure-tls --overwrite --password=PASSWORD --project=PROJECT --server-id=SERVER-ID --ssh-key-path=SSH-KEY-PATH --ssh-passphrase=SSH-PASSPHRASE --url=URL --user=USER
+          expected-result-pwsh: jf rt build-publish [BUILD-NAME] [BUILD-NUMBER] --format=FORMAT --access-token=ACCESS-TOKEN --build-url=BUILD-URL --collect-env --collect-git-info --dep-exclude-scopes=DEP-EXCLUDE-SCOPES --detailed-summary --dot-git-path=DOT-GIT-PATH --dry-run --env-exclude=ENV-EXCLUDE --env-include=ENV-INCLUDE --git-config-file-path=GIT-CONFIG-FILE-PATH --insecure-tls --overwrite --password=PASSWORD --project=PROJECT --server-id=SERVER-ID --ssh-key-path=SSH-KEY-PATH --ssh-passphrase=SSH-PASSPHRASE --url=URL --user=USER
+
+      - name: Act
+        id: act
+        uses: $/.github/actions/jfrog/rt/jfrog-rt-build-publish
+        with:
+          build-name: '[BUILD-NAME]'
+          build-number: '[BUILD-NUMBER]'
+          format: 'FORMAT'
+          access-token: 'ACCESS-TOKEN'
+          build-url: 'BUILD-URL'
+          collect-env: 'true'
+          collect-git-info: 'true'
+          dep-exclude-scopes: 'DEP-EXCLUDE-SCOPES'
+          detailed-summary: 'true'
+          dot-git-path: 'DOT-GIT-PATH'
+          dry-run: 'true'
+          env-exclude: 'ENV-EXCLUDE'
+          env-include: 'ENV-INCLUDE'
+          git-config-file-path: 'GIT-CONFIG-FILE-PATH'
+          insecure-tls: 'true'
+          overwrite: 'true'
+          password: 'PASSWORD'
+          project: 'PROJECT'
+          server-id: 'SERVER-ID'
+          ssh-key-path: 'SSH-KEY-PATH'
+          ssh-passphrase: 'SSH-PASSPHRASE'
+          url: 'URL'
+          user: 'USER'
+          shell: ${{ matrix.shell }}
+          is-test: 'true'
+
+      - name: Assert
+        uses: $/.github/actions/tests/helper/assert-result
+        with:
+          result: ${{ steps.act.outputs.command }}
+          expected-result: ${{ steps.arrange.outputs.expected-result }}

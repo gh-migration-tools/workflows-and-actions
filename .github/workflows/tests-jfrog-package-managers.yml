@@ -1,0 +1,322 @@
+name: Tests actions 'jfrog package managers'
+
+on:
+  workflow_run:
+    workflows: ["Tests"]
+    types: [completed]
+
+jobs:
+  setup:
+    name: Setup
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    outputs:
+      test-action-jfrog-apk: ${{ steps.changes.outputs.test-action-jfrog-apk }}
+      test-action-jfrog-apt: ${{ steps.changes.outputs.test-action-jfrog-apt }}
+      test-action-jfrog-cargo: ${{ steps.changes.outputs.test-action-jfrog-cargo }}
+      test-action-jfrog-choco: ${{ steps.changes.outputs.test-action-jfrog-choco }}
+      test-action-jfrog-conan: ${{ steps.changes.outputs.test-action-jfrog-conan }}
+      test-action-jfrog-conan-config: ${{ steps.changes.outputs.test-action-jfrog-conan-config }}
+      test-action-jfrog-docker: ${{ steps.changes.outputs.test-action-jfrog-docker }}
+      test-action-jfrog-dotnet: ${{ steps.changes.outputs.test-action-jfrog-dotnet }}
+      test-action-jfrog-dotnet-config: ${{ steps.changes.outputs.test-action-jfrog-dotnet-config }}
+      test-action-jfrog-go: ${{ steps.changes.outputs.test-action-jfrog-go }}
+      test-action-jfrog-go-config: ${{ steps.changes.outputs.test-action-jfrog-go-config }}
+      test-action-jfrog-go-publish: ${{ steps.changes.outputs.test-action-jfrog-go-publish }}
+      test-action-jfrog-gradle: ${{ steps.changes.outputs.test-action-jfrog-gradle }}
+      test-action-jfrog-gradle-config: ${{ steps.changes.outputs.test-action-jfrog-gradle-config }}
+      test-action-jfrog-helm: ${{ steps.changes.outputs.test-action-jfrog-helm }}
+      test-action-jfrog-mvn: ${{ steps.changes.outputs.test-action-jfrog-mvn }}
+      test-action-jfrog-mvn-config: ${{ steps.changes.outputs.test-action-jfrog-mvn-config }}
+      test-action-jfrog-mvnw: ${{ steps.changes.outputs.test-action-jfrog-mvnw }}
+      test-action-jfrog-nix: ${{ steps.changes.outputs.test-action-jfrog-nix }}
+      test-action-jfrog-npm: ${{ steps.changes.outputs.test-action-jfrog-npm }}
+      test-action-jfrog-npm-config: ${{ steps.changes.outputs.test-action-jfrog-npm-config }}
+      test-action-jfrog-nuget: ${{ steps.changes.outputs.test-action-jfrog-nuget }}
+      test-action-jfrog-nuget-config: ${{ steps.changes.outputs.test-action-jfrog-nuget-config }}
+      test-action-jfrog-pip: ${{ steps.changes.outputs.test-action-jfrog-pip }}
+      test-action-jfrog-pip-config: ${{ steps.changes.outputs.test-action-jfrog-pip-config }}
+      test-action-jfrog-pipenv: ${{ steps.changes.outputs.test-action-jfrog-pipenv }}
+      test-action-jfrog-pipenv-config: ${{ steps.changes.outputs.test-action-jfrog-pipenv-config }}
+      test-action-jfrog-poetry: ${{ steps.changes.outputs.test-action-jfrog-poetry }}
+      test-action-jfrog-poetry-config: ${{ steps.changes.outputs.test-action-jfrog-poetry-config }}
+      test-action-jfrog-ruby: ${{ steps.changes.outputs.test-action-jfrog-ruby }}
+      test-action-jfrog-terraform: ${{ steps.changes.outputs.test-action-jfrog-terraform }}
+      test-action-jfrog-terraform-config: ${{ steps.changes.outputs.test-action-jfrog-terraform-config }}
+      test-action-jfrog-twine: ${{ steps.changes.outputs.test-action-jfrog-twine }}
+      test-action-jfrog-yarn: ${{ steps.changes.outputs.test-action-jfrog-yarn }}
+      test-action-jfrog-yarn-config: ${{ steps.changes.outputs.test-action-jfrog-yarn-config }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 2
+
+      - name: Check workflows and actions chnages
+        id: changes
+        shell: bash
+        env:
+          ACTIONS: |
+            jfrog-apk
+            jfrog-apt
+            jfrog-cargo
+            jfrog-choco
+            jfrog-conan
+            jfrog-conan-config
+            jfrog-docker
+            jfrog-dotnet
+            jfrog-dotnet-config
+            jfrog-go
+            jfrog-go-config
+            jfrog-go-publish
+            jfrog-gradle
+            jfrog-gradle-config
+            jfrog-helm
+            jfrog-mvn
+            jfrog-mvn-config
+            jfrog-mvnw
+            jfrog-nix
+            jfrog-npm
+            jfrog-npm-config
+            jfrog-nuget
+            jfrog-nuget-config
+            jfrog-pip
+            jfrog-pip-config
+            jfrog-pipenv
+            jfrog-pipenv-config
+            jfrog-poetry
+            jfrog-poetry-config
+            jfrog-ruby
+            jfrog-terraform
+            jfrog-terraform-config
+            jfrog-twine
+            jfrog-yarn
+            jfrog-yarn-config
+        run: |
+          check_changed() {
+            ! git diff --quiet HEAD~1 HEAD -- "$1" || ! git diff --quiet HEAD~1 HEAD -- "$2"
+          }
+
+          while IFS= read -r name; do
+            [[ -n "$name" ]] || continue
+            changed=false
+            if check_changed \
+              ".github/actions/jfrog/package-managers/$name/action.yml" \
+              ".github/workflows/tests-action-$name.yml"; then
+              changed=true
+            fi
+            echo "test-action-$name=$changed" >> "$GITHUB_OUTPUT"
+          done <<< "$ACTIONS"
+
+  # -------------------------------------------------- #
+  # Tests 'jfrog package managers' actions             #
+  # -------------------------------------------------- #
+  tests_action_jfrog_apk:
+    if: ${{ needs.setup.outputs.test-action-jfrog-apk == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-apk'
+    uses: $/.github/workflows/tests-action-jfrog-apk.yml
+
+  tests_action_jfrog_apt:
+    if: ${{ needs.setup.outputs.test-action-jfrog-apt == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-apt'
+    uses: $/.github/workflows/tests-action-jfrog-apt.yml
+
+  tests_action_jfrog_cargo:
+    if: ${{ needs.setup.outputs.test-action-jfrog-cargo == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-cargo'
+    uses: $/.github/workflows/tests-action-jfrog-cargo.yml
+
+  tests_action_jfrog_choco:
+    if: ${{ needs.setup.outputs.test-action-jfrog-choco == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-choco'
+    uses: $/.github/workflows/tests-action-jfrog-choco.yml
+
+  tests_action_jfrog_conan:
+    if: ${{ needs.setup.outputs.test-action-jfrog-conan == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-conan'
+    uses: $/.github/workflows/tests-action-jfrog-conan.yml
+
+  tests_action_jfrog_conan_config:
+    if: ${{ needs.setup.outputs.test-action-jfrog-conan-config == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-conan-config'
+    uses: $/.github/workflows/tests-action-jfrog-conan-config.yml
+
+  tests_action_jfrog_docker:
+    if: ${{ needs.setup.outputs.test-action-jfrog-docker == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-docker'
+    uses: $/.github/workflows/tests-action-jfrog-docker.yml
+
+  tests_action_jfrog_dotnet:
+    if: ${{ needs.setup.outputs.test-action-jfrog-dotnet == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-dotnet'
+    uses: $/.github/workflows/tests-action-jfrog-dotnet.yml
+
+  tests_action_jfrog_dotnet_config:
+    if: ${{ needs.setup.outputs.test-action-jfrog-dotnet-config == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-dotnet-config'
+    uses: $/.github/workflows/tests-action-jfrog-dotnet-config.yml
+
+  tests_action_jfrog_go:
+    if: ${{ needs.setup.outputs.test-action-jfrog-go == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-go'
+    uses: $/.github/workflows/tests-action-jfrog-go.yml
+
+  tests_action_jfrog_go_config:
+    if: ${{ needs.setup.outputs.test-action-jfrog-go-config == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-go-config'
+    uses: $/.github/workflows/tests-action-jfrog-go-config.yml
+
+  tests_action_jfrog_go_publish:
+    if: ${{ needs.setup.outputs.test-action-jfrog-go-publish == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-go-publish'
+    uses: $/.github/workflows/tests-action-jfrog-go-publish.yml
+
+  tests_action_jfrog_gradle:
+    if: ${{ needs.setup.outputs.test-action-jfrog-gradle == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-gradle'
+    uses: $/.github/workflows/tests-action-jfrog-gradle.yml
+
+  tests_action_jfrog_gradle_config:
+    if: ${{ needs.setup.outputs.test-action-jfrog-gradle-config == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-gradle-config'
+    uses: $/.github/workflows/tests-action-jfrog-gradle-config.yml
+
+  tests_action_jfrog_helm:
+    if: ${{ needs.setup.outputs.test-action-jfrog-helm == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-helm'
+    uses: $/.github/workflows/tests-action-jfrog-helm.yml
+
+  tests_action_jfrog_mvn:
+    if: ${{ needs.setup.outputs.test-action-jfrog-mvn == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-mvn'
+    uses: $/.github/workflows/tests-action-jfrog-mvn.yml
+
+  tests_action_jfrog_mvn_config:
+    if: ${{ needs.setup.outputs.test-action-jfrog-mvn-config == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-mvn-config'
+    uses: $/.github/workflows/tests-action-jfrog-mvn-config.yml
+
+  tests_action_jfrog_mvnw:
+    if: ${{ needs.setup.outputs.test-action-jfrog-mvnw == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-mvnw'
+    uses: $/.github/workflows/tests-action-jfrog-mvnw.yml
+
+  tests_action_jfrog_nix:
+    if: ${{ needs.setup.outputs.test-action-jfrog-nix == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-nix'
+    uses: $/.github/workflows/tests-action-jfrog-nix.yml
+
+  tests_action_jfrog_npm:
+    if: ${{ needs.setup.outputs.test-action-jfrog-npm == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-npm'
+    uses: $/.github/workflows/tests-action-jfrog-npm.yml
+
+  tests_action_jfrog_npm_config:
+    if: ${{ needs.setup.outputs.test-action-jfrog-npm-config == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-npm-config'
+    uses: $/.github/workflows/tests-action-jfrog-npm-config.yml
+
+  tests_action_jfrog_nuget:
+    if: ${{ needs.setup.outputs.test-action-jfrog-nuget == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-nuget'
+    uses: $/.github/workflows/tests-action-jfrog-nuget.yml
+
+  tests_action_jfrog_nuget_config:
+    if: ${{ needs.setup.outputs.test-action-jfrog-nuget-config == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-nuget-config'
+    uses: $/.github/workflows/tests-action-jfrog-nuget-config.yml
+
+  tests_action_jfrog_pip:
+    if: ${{ needs.setup.outputs.test-action-jfrog-pip == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-pip'
+    uses: $/.github/workflows/tests-action-jfrog-pip.yml
+
+  tests_action_jfrog_pip_config:
+    if: ${{ needs.setup.outputs.test-action-jfrog-pip-config == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-pip-config'
+    uses: $/.github/workflows/tests-action-jfrog-pip-config.yml
+
+  tests_action_jfrog_pipenv:
+    if: ${{ needs.setup.outputs.test-action-jfrog-pipenv == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-pipenv'
+    uses: $/.github/workflows/tests-action-jfrog-pipenv.yml
+
+  tests_action_jfrog_pipenv_config:
+    if: ${{ needs.setup.outputs.test-action-jfrog-pipenv-config == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-pipenv-config'
+    uses: $/.github/workflows/tests-action-jfrog-pipenv-config.yml
+
+  tests_action_jfrog_poetry:
+    if: ${{ needs.setup.outputs.test-action-jfrog-poetry == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-poetry'
+    uses: $/.github/workflows/tests-action-jfrog-poetry.yml
+
+  tests_action_jfrog_poetry_config:
+    if: ${{ needs.setup.outputs.test-action-jfrog-poetry-config == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-poetry-config'
+    uses: $/.github/workflows/tests-action-jfrog-poetry-config.yml
+
+  tests_action_jfrog_ruby:
+    if: ${{ needs.setup.outputs.test-action-jfrog-ruby == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-ruby'
+    uses: $/.github/workflows/tests-action-jfrog-ruby.yml
+
+  tests_action_jfrog_terraform:
+    if: ${{ needs.setup.outputs.test-action-jfrog-terraform == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-terraform'
+    uses: $/.github/workflows/tests-action-jfrog-terraform.yml
+
+  tests_action_jfrog_terraform_config:
+    if: ${{ needs.setup.outputs.test-action-jfrog-terraform-config == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-terraform-config'
+    uses: $/.github/workflows/tests-action-jfrog-terraform-config.yml
+
+  tests_action_jfrog_twine:
+    if: ${{ needs.setup.outputs.test-action-jfrog-twine == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-twine'
+    uses: $/.github/workflows/tests-action-jfrog-twine.yml
+
+  tests_action_jfrog_yarn:
+    if: ${{ needs.setup.outputs.test-action-jfrog-yarn == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-yarn'
+    uses: $/.github/workflows/tests-action-jfrog-yarn.yml
+
+  tests_action_jfrog_yarn_config:
+    if: ${{ needs.setup.outputs.test-action-jfrog-yarn-config == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-yarn-config'
+    uses: $/.github/workflows/tests-action-jfrog-yarn-config.yml

@@ -1,0 +1,42 @@
+name: Tests action 'jfrog-terraform'
+
+on:
+  workflow_call:
+
+jobs:
+  should_return_command:
+    name: Should return command (${{ matrix.shell }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shell: [bash, pwsh]
+    steps:
+      - name: Arrange
+        id: arrange
+        uses: $/.github/actions/tests/helper/arrange-expected-result
+        with:
+          shell: ${{ matrix.shell }}
+          expected-result-bash: jf terraform \[ARGS\] --build-name=BUILD-NAME --build-number=BUILD-NUMBER --exclusions=EXCLUSIONS --module=MODULE --namespace=NAMESPACE --project=PROJECT --provider=PROVIDER --tag=TAG
+          expected-result-pwsh: jf terraform [ARGS] --build-name=BUILD-NAME --build-number=BUILD-NUMBER --exclusions=EXCLUSIONS --module=MODULE --namespace=NAMESPACE --project=PROJECT --provider=PROVIDER --tag=TAG
+
+      - name: Act
+        id: act
+        uses: $/.github/actions/jfrog/package-managers/jfrog-terraform
+        with:
+          args: '[ARGS]'
+          build-name: 'BUILD-NAME'
+          build-number: 'BUILD-NUMBER'
+          exclusions: 'EXCLUSIONS'
+          module: 'MODULE'
+          namespace: 'NAMESPACE'
+          project: 'PROJECT'
+          provider: 'PROVIDER'
+          tag: 'TAG'
+          shell: ${{ matrix.shell }}
+          is-test: 'true'
+
+      - name: Assert
+        uses: $/.github/actions/tests/helper/assert-result
+        with:
+          result: ${{ steps.act.outputs.command }}
+          expected-result: ${{ steps.arrange.outputs.expected-result }}

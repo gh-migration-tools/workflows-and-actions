@@ -1,0 +1,124 @@
+name: Tests action 'jfrog-rt-download'
+
+on:
+  workflow_call:
+
+jobs:
+  should_return_command:
+    name: Should return command (${{ matrix.shell }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shell: [bash, pwsh]
+    steps:
+      - name: Arrange
+        id: arrange
+        uses: $/.github/actions/tests/helper/arrange-expected-result
+        with:
+          shell: ${{ matrix.shell }}
+          expected-result-bash: jf rt download \[SOURCE-PATTERN\] \[TARGET-PATTERN\] --format=FORMAT --access-token=ACCESS-TOKEN --archive-entries=ARCHIVE-ENTRIES --build=BUILD --build-name=BUILD-NAME --build-number=BUILD-NUMBER --bundle=BUNDLE --bypass-archive-inspection --client-cert-key-path=CLIENT-CERT-KEY-PATH --client-cert-path=CLIENT-CERT-PATH --detailed-summary --dry-run --exclude-artifacts=EXCLUDE-ARTIFACTS --exclude-props=EXCLUDE-PROPS --exclusions=EXCLUSIONS --explode --fail-no-op --flat --gpg-key=GPG-KEY --include-deps=INCLUDE-DEPS --include-dirs --insecure-tls --limit=LIMIT --min-split=MIN-SPLIT --module=MODULE --offset=OFFSET --password=PASSWORD --project=PROJECT --props=PROPS --quiet --recursive=RECURSIVE --retries=RETRIES --retry-wait-time=RETRY-WAIT-TIME --server-id=SERVER-ID --skip-checksum --sort-by=SORT-BY --sort-order=SORT-ORDER --spec=SPEC --spec-vars=SPEC-VARS --split-count=SPLIT-COUNT --ssh-key-path=SSH-KEY-PATH --ssh-passphrase=SSH-PASSPHRASE --sync-deletes=SYNC-DELETES --threads=THREADS --url=URL --user=USER --validate-symlinks
+          expected-result-pwsh: jf rt download [SOURCE-PATTERN] [TARGET-PATTERN] --format=FORMAT --access-token=ACCESS-TOKEN --archive-entries=ARCHIVE-ENTRIES --build=BUILD --build-name=BUILD-NAME --build-number=BUILD-NUMBER --bundle=BUNDLE --bypass-archive-inspection --client-cert-key-path=CLIENT-CERT-KEY-PATH --client-cert-path=CLIENT-CERT-PATH --detailed-summary --dry-run --exclude-artifacts=EXCLUDE-ARTIFACTS --exclude-props=EXCLUDE-PROPS --exclusions=EXCLUSIONS --explode --fail-no-op --flat --gpg-key=GPG-KEY --include-deps=INCLUDE-DEPS --include-dirs --insecure-tls --limit=LIMIT --min-split=MIN-SPLIT --module=MODULE --offset=OFFSET --password=PASSWORD --project=PROJECT --props=PROPS --quiet --recursive=RECURSIVE --retries=RETRIES --retry-wait-time=RETRY-WAIT-TIME --server-id=SERVER-ID --skip-checksum --sort-by=SORT-BY --sort-order=SORT-ORDER --spec=SPEC --spec-vars=SPEC-VARS --split-count=SPLIT-COUNT --ssh-key-path=SSH-KEY-PATH --ssh-passphrase=SSH-PASSPHRASE --sync-deletes=SYNC-DELETES --threads=THREADS --url=URL --user=USER --validate-symlinks
+
+      - name: Act
+        id: act
+        uses: $/.github/actions/jfrog/rt/jfrog-rt-download
+        with:
+          source-pattern: '[SOURCE-PATTERN]'
+          target-pattern: '[TARGET-PATTERN]'
+          format: 'FORMAT'
+          access-token: 'ACCESS-TOKEN'
+          archive-entries: 'ARCHIVE-ENTRIES'
+          build: 'BUILD'
+          build-name: 'BUILD-NAME'
+          build-number: 'BUILD-NUMBER'
+          bundle: 'BUNDLE'
+          bypass-archive-inspection: 'true'
+          client-cert-key-path: 'CLIENT-CERT-KEY-PATH'
+          client-cert-path: 'CLIENT-CERT-PATH'
+          detailed-summary: 'true'
+          dry-run: 'true'
+          exclude-artifacts: 'EXCLUDE-ARTIFACTS'
+          exclude-props: 'EXCLUDE-PROPS'
+          exclusions: 'EXCLUSIONS'
+          explode: 'true'
+          fail-no-op: 'true'
+          flat: 'true'
+          gpg-key: 'GPG-KEY'
+          include-deps: 'INCLUDE-DEPS'
+          include-dirs: 'true'
+          insecure-tls: 'true'
+          limit: 'LIMIT'
+          min-split: 'MIN-SPLIT'
+          module: 'MODULE'
+          offset: 'OFFSET'
+          password: 'PASSWORD'
+          project: 'PROJECT'
+          props: 'PROPS'
+          quiet: 'true'
+          recursive: 'RECURSIVE'
+          retries: 'RETRIES'
+          retry-wait-time: 'RETRY-WAIT-TIME'
+          server-id: 'SERVER-ID'
+          skip-checksum: 'true'
+          sort-by: 'SORT-BY'
+          sort-order: 'SORT-ORDER'
+          spec: 'SPEC'
+          spec-vars: 'SPEC-VARS'
+          split-count: 'SPLIT-COUNT'
+          ssh-key-path: 'SSH-KEY-PATH'
+          ssh-passphrase: 'SSH-PASSPHRASE'
+          sync-deletes: 'SYNC-DELETES'
+          threads: 'THREADS'
+          url: 'URL'
+          user: 'USER'
+          validate-symlinks: 'true'
+          shell: ${{ matrix.shell }}
+          is-test: 'true'
+
+      - name: Assert
+        uses: $/.github/actions/tests/helper/assert-result
+        with:
+          result: ${{ steps.act.outputs.command }}
+          expected-result: ${{ steps.arrange.outputs.expected-result }}
+
+  should_create_spec_file:
+    name: Should create spec file (${{ matrix.shell }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shell: [bash, pwsh]
+    steps:
+      - name: Arrange
+        id: arrange
+        uses: $/.github/actions/tests/helper/arrange-expected-result
+        with:
+          shell: ${{ matrix.shell }}
+          expected-result-bash: jf rt download \[SOURCE-PATTERN\] \[TARGET-PATTERN\] --spec=spec.json
+          expected-result-pwsh: jf rt download [SOURCE-PATTERN] [TARGET-PATTERN] --spec=spec.json
+
+      - name: Act
+        id: act
+        uses: $/.github/actions/jfrog/rt/jfrog-rt-download
+        with:
+          source-pattern: '[SOURCE-PATTERN]'
+          target-pattern: '[TARGET-PATTERN]'
+          spec-json: |
+            {
+              "files": []
+            }
+          shell: ${{ matrix.shell }}
+          is-test: 'true'
+
+      - name: Assert
+        uses: $/.github/actions/tests/helper/assert-result
+        with:
+          result: ${{ steps.act.outputs.command }}
+          expected-result: ${{ steps.arrange.outputs.expected-result }}
+
+      - name: Assert 'specs.json' file
+        shell: bash
+        run: |
+          if [[ ! -f 'spec.json' ]]; then
+            echo 'spec.json was not found' >&2
+            exit 1
+          fi

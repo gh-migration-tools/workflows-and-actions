@@ -1,0 +1,49 @@
+name: Tests action 'jfrog-rt-git-lfs-clean'
+
+on:
+  workflow_call:
+
+jobs:
+  should_return_command:
+    name: Should return command (${{ matrix.shell }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shell: [bash, pwsh]
+    steps:
+      - name: Arrange
+        id: arrange
+        uses: $/.github/actions/tests/helper/arrange-expected-result
+        with:
+          shell: ${{ matrix.shell }}
+          expected-result-bash: jf rt git-lfs-clean \[PATH-TO-GIT\] --format=FORMAT --access-token=ACCESS-TOKEN --dry-run --insecure-tls --password=PASSWORD --quiet --refs=REFS --repo=REPO --retries=RETRIES --retry-wait-time=RETRY-WAIT-TIME --server-id=SERVER-ID --ssh-key-path=SSH-KEY-PATH --ssh-passphrase=SSH-PASSPHRASE --url=URL --user=USER
+          expected-result-pwsh: jf rt git-lfs-clean [PATH-TO-GIT] --format=FORMAT --access-token=ACCESS-TOKEN --dry-run --insecure-tls --password=PASSWORD --quiet --refs=REFS --repo=REPO --retries=RETRIES --retry-wait-time=RETRY-WAIT-TIME --server-id=SERVER-ID --ssh-key-path=SSH-KEY-PATH --ssh-passphrase=SSH-PASSPHRASE --url=URL --user=USER
+
+      - name: Act
+        id: act
+        uses: $/.github/actions/jfrog/rt/jfrog-rt-git-lfs-clean
+        with:
+          path-to-git: '[PATH-TO-GIT]'
+          format: 'FORMAT'
+          access-token: 'ACCESS-TOKEN'
+          dry-run: 'true'
+          insecure-tls: 'true'
+          password: 'PASSWORD'
+          quiet: 'true'
+          refs: 'REFS'
+          repo: 'REPO'
+          retries: 'RETRIES'
+          retry-wait-time: 'RETRY-WAIT-TIME'
+          server-id: 'SERVER-ID'
+          ssh-key-path: 'SSH-KEY-PATH'
+          ssh-passphrase: 'SSH-PASSPHRASE'
+          url: 'URL'
+          user: 'USER'
+          shell: ${{ matrix.shell }}
+          is-test: 'true'
+
+      - name: Assert
+        uses: $/.github/actions/tests/helper/assert-result
+        with:
+          result: ${{ steps.act.outputs.command }}
+          expected-result: ${{ steps.arrange.outputs.expected-result }}

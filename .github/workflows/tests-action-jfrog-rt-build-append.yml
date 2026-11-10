@@ -1,0 +1,50 @@
+name: Tests action 'jfrog-rt-build-append'
+
+on:
+  workflow_call:
+
+jobs:
+  should_return_command:
+    name: Should return command (${{ matrix.shell }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shell: [bash, pwsh]
+    steps:
+      - name: Arrange
+        id: arrange
+        uses: $/.github/actions/tests/helper/arrange-expected-result
+        with:
+          shell: ${{ matrix.shell }}
+          expected-result-bash: jf rt build-append \[BUILD-NAME\] \[BUILD-NUMBER\] \[BUILD-NAME-TO-APPEND\] \[BUILD-NUMBER-TO-APPEND\] --access-token=ACCESS-TOKEN --build-url=BUILD-URL --dry-run --env-exclude=ENV-EXCLUDE --env-include=ENV-INCLUDE --insecure-tls --password=PASSWORD --project=PROJECT --server-id=SERVER-ID --ssh-key-path=SSH-KEY-PATH --ssh-passphrase=SSH-PASSPHRASE --url=URL --user=USER
+          expected-result-pwsh: jf rt build-append [BUILD-NAME] [BUILD-NUMBER] [BUILD-NAME-TO-APPEND] [BUILD-NUMBER-TO-APPEND] --access-token=ACCESS-TOKEN --build-url=BUILD-URL --dry-run --env-exclude=ENV-EXCLUDE --env-include=ENV-INCLUDE --insecure-tls --password=PASSWORD --project=PROJECT --server-id=SERVER-ID --ssh-key-path=SSH-KEY-PATH --ssh-passphrase=SSH-PASSPHRASE --url=URL --user=USER
+
+      - name: Act
+        id: act
+        uses: $/.github/actions/jfrog/rt/jfrog-rt-build-append
+        with:
+          build-name: '[BUILD-NAME]'
+          build-number: '[BUILD-NUMBER]'
+          build-name-to-append: '[BUILD-NAME-TO-APPEND]'
+          build-number-to-append: '[BUILD-NUMBER-TO-APPEND]'
+          access-token: 'ACCESS-TOKEN'
+          build-url: 'BUILD-URL'
+          dry-run: 'true'
+          env-exclude: 'ENV-EXCLUDE'
+          env-include: 'ENV-INCLUDE'
+          insecure-tls: 'true'
+          password: 'PASSWORD'
+          project: 'PROJECT'
+          server-id: 'SERVER-ID'
+          ssh-key-path: 'SSH-KEY-PATH'
+          ssh-passphrase: 'SSH-PASSPHRASE'
+          url: 'URL'
+          user: 'USER'
+          shell: ${{ matrix.shell }}
+          is-test: 'true'
+
+      - name: Assert
+        uses: $/.github/actions/tests/helper/assert-result
+        with:
+          result: ${{ steps.act.outputs.command }}
+          expected-result: ${{ steps.arrange.outputs.expected-result }}

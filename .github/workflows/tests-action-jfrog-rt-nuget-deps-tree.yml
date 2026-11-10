@@ -1,0 +1,26 @@
+name: Tests action 'jfrog-rt-nuget-deps-tree'
+
+on:
+  workflow_call:
+
+jobs:
+  should_return_command:
+    name: Should return command (${{ matrix.shell }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shell: [bash, pwsh]
+    steps:
+      - name: Act
+        id: act
+        uses: $/.github/actions/jfrog/rt/jfrog-rt-nuget-deps-tree
+        with:
+          format: 'FORMAT'
+          shell: ${{ matrix.shell }}
+          is-test: 'true'
+
+      - name: Assert
+        uses: $/.github/actions/tests/helper/assert-result
+        with:
+          result: ${{ steps.act.outputs.command }}
+          expected-result: jf rt nuget-deps-tree --format=FORMAT

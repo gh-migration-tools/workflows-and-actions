@@ -1,0 +1,110 @@
+name: Tests action 'jfrog-rt-copy'
+
+on:
+  workflow_call:
+
+jobs:
+  should_return_command:
+    name: Should return command (${{ matrix.shell }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shell: [bash, pwsh]
+    steps:
+      - name: Arrange
+        id: arrange
+        uses: $/.github/actions/tests/helper/arrange-expected-result
+        with:
+          shell: ${{ matrix.shell }}
+          expected-result-bash: jf rt copy \[SOURCE-PATTERN\] \[TARGET-PATTERN\] --format=FORMAT --access-token=ACCESS-TOKEN --archive-entries=ARCHIVE-ENTRIES --build=BUILD --bundle=BUNDLE --client-cert-key-path=CLIENT-CERT-KEY-PATH --client-cert-path=CLIENT-CERT-PATH --dry-run --exclude-artifacts=EXCLUDE-ARTIFACTS --exclude-props=EXCLUDE-PROPS --exclusions=EXCLUSIONS --fail-no-op --flat --include-deps=INCLUDE-DEPS --insecure-tls --limit=LIMIT --offset=OFFSET --password=PASSWORD --project=PROJECT --props=PROPS --recursive --retries=RETRIES --retry-wait-time=RETRY-WAIT-TIME --server-id=SERVER-ID --sort-by=SORT-BY --sort-order=SORT-ORDER --spec=SPEC --spec-vars=SPEC-VARS --ssh-key-path=SSH-KEY-PATH --ssh-passphrase=SSH-PASSPHRASE --threads=THREADS --url=URL --user=USER
+          expected-result-pwsh: jf rt copy [SOURCE-PATTERN] [TARGET-PATTERN] --format=FORMAT --access-token=ACCESS-TOKEN --archive-entries=ARCHIVE-ENTRIES --build=BUILD --bundle=BUNDLE --client-cert-key-path=CLIENT-CERT-KEY-PATH --client-cert-path=CLIENT-CERT-PATH --dry-run --exclude-artifacts=EXCLUDE-ARTIFACTS --exclude-props=EXCLUDE-PROPS --exclusions=EXCLUSIONS --fail-no-op --flat --include-deps=INCLUDE-DEPS --insecure-tls --limit=LIMIT --offset=OFFSET --password=PASSWORD --project=PROJECT --props=PROPS --recursive --retries=RETRIES --retry-wait-time=RETRY-WAIT-TIME --server-id=SERVER-ID --sort-by=SORT-BY --sort-order=SORT-ORDER --spec=SPEC --spec-vars=SPEC-VARS --ssh-key-path=SSH-KEY-PATH --ssh-passphrase=SSH-PASSPHRASE --threads=THREADS --url=URL --user=USER
+
+      - name: Act
+        id: act
+        uses: $/.github/actions/jfrog/rt/jfrog-rt-copy
+        with:
+          source-pattern: '[SOURCE-PATTERN]'
+          target-pattern: '[TARGET-PATTERN]'
+          format: 'FORMAT'
+          access-token: 'ACCESS-TOKEN'
+          archive-entries: 'ARCHIVE-ENTRIES'
+          build: 'BUILD'
+          bundle: 'BUNDLE'
+          client-cert-key-path: 'CLIENT-CERT-KEY-PATH'
+          client-cert-path: 'CLIENT-CERT-PATH'
+          dry-run: 'true'
+          exclude-artifacts: 'EXCLUDE-ARTIFACTS'
+          exclude-props: 'EXCLUDE-PROPS'
+          exclusions: 'EXCLUSIONS'
+          fail-no-op: 'true'
+          flat: 'true'
+          include-deps: 'INCLUDE-DEPS'
+          insecure-tls: 'true'
+          limit: 'LIMIT'
+          offset: 'OFFSET'
+          password: 'PASSWORD'
+          project: 'PROJECT'
+          props: 'PROPS'
+          recursive: 'true'
+          retries: 'RETRIES'
+          retry-wait-time: 'RETRY-WAIT-TIME'
+          server-id: 'SERVER-ID'
+          sort-by: 'SORT-BY'
+          sort-order: 'SORT-ORDER'
+          spec: 'SPEC'
+          spec-vars: 'SPEC-VARS'
+          ssh-key-path: 'SSH-KEY-PATH'
+          ssh-passphrase: 'SSH-PASSPHRASE'
+          threads: 'THREADS'
+          url: 'URL'
+          user: 'USER'
+          shell: ${{ matrix.shell }}
+          is-test: 'true'
+
+      - name: Assert
+        uses: $/.github/actions/tests/helper/assert-result
+        with:
+          result: ${{ steps.act.outputs.command }}
+          expected-result: ${{ steps.arrange.outputs.expected-result }}
+
+  should_create_spec_file:
+    name: Should create spec file (${{ matrix.shell }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shell: [bash, pwsh]
+    steps:
+      - name: Arrange
+        id: arrange
+        uses: $/.github/actions/tests/helper/arrange-expected-result
+        with:
+          shell: ${{ matrix.shell }}
+          expected-result-bash: jf rt copy \[SOURCE-PATTERN\] \[TARGET-PATTERN\] --spec=spec.json
+          expected-result-pwsh: jf rt copy [SOURCE-PATTERN] [TARGET-PATTERN] --spec=spec.json
+
+      - name: Act
+        id: act
+        uses: $/.github/actions/jfrog/rt/jfrog-rt-copy
+        with:
+          source-pattern: '[SOURCE-PATTERN]'
+          target-pattern: '[TARGET-PATTERN]'
+          spec-json: |
+            {
+              "files": []
+            }
+          shell: ${{ matrix.shell }}
+          is-test: 'true'
+
+      - name: Assert
+        uses: $/.github/actions/tests/helper/assert-result
+        with:
+          result: ${{ steps.act.outputs.command }}
+          expected-result: ${{ steps.arrange.outputs.expected-result }}
+
+      - name: Assert 'specs.json' file
+        shell: bash
+        run: |
+          if [[ ! -f 'spec.json' ]]; then
+            echo 'spec.json was not found' >&2
+            exit 1
+          fi

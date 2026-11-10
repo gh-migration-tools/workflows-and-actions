@@ -1,0 +1,51 @@
+name: Tests action 'jfrog-rt-podman-push'
+
+on:
+  workflow_call:
+
+jobs:
+  should_return_command:
+    name: Should return command (${{ matrix.shell }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shell: [bash, pwsh]
+    steps:
+      - name: Arrange
+        id: arrange
+        uses: $/.github/actions/tests/helper/arrange-expected-result
+        with:
+          shell: ${{ matrix.shell }}
+          expected-result-bash: jf rt podman-push \[IMAGE-TAG\] \[TARGET-REPO\] --format=FORMAT --access-token=ACCESS-TOKEN --build-name=BUILD-NAME --build-number=BUILD-NUMBER --detailed-summary --module=MODULE --password=PASSWORD --project=PROJECT --server-id=SERVER-ID --skip-login --ssh-key-path=SSH-KEY-PATH --ssh-passphrase=SSH-PASSPHRASE --threads=THREADS --url=URL --user=USER --validate-sha
+          expected-result-pwsh: jf rt podman-push [IMAGE-TAG] [TARGET-REPO] --format=FORMAT --access-token=ACCESS-TOKEN --build-name=BUILD-NAME --build-number=BUILD-NUMBER --detailed-summary --module=MODULE --password=PASSWORD --project=PROJECT --server-id=SERVER-ID --skip-login --ssh-key-path=SSH-KEY-PATH --ssh-passphrase=SSH-PASSPHRASE --threads=THREADS --url=URL --user=USER --validate-sha
+
+      - name: Act
+        id: act
+        uses: $/.github/actions/jfrog/rt/jfrog-rt-podman-push
+        with:
+          image-tag: '[IMAGE-TAG]'
+          target-repo: '[TARGET-REPO]'
+          format: 'FORMAT'
+          access-token: 'ACCESS-TOKEN'
+          build-name: 'BUILD-NAME'
+          build-number: 'BUILD-NUMBER'
+          detailed-summary: 'true'
+          module: 'MODULE'
+          password: 'PASSWORD'
+          project: 'PROJECT'
+          server-id: 'SERVER-ID'
+          skip-login: 'true'
+          ssh-key-path: 'SSH-KEY-PATH'
+          ssh-passphrase: 'SSH-PASSPHRASE'
+          threads: 'THREADS'
+          url: 'URL'
+          user: 'USER'
+          validate-sha: 'true'
+          shell: ${{ matrix.shell }}
+          is-test: 'true'
+
+      - name: Assert
+        uses: $/.github/actions/tests/helper/assert-result
+        with:
+          result: ${{ steps.act.outputs.command }}
+          expected-result: ${{ steps.arrange.outputs.expected-result }}

@@ -1,0 +1,40 @@
+name: Tests action 'jfrog-rt-transfer-config-merge'
+
+on:
+  workflow_call:
+
+jobs:
+  should_return_command:
+    name: Should return command (${{ matrix.shell }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shell: [bash, pwsh]
+    steps:
+      - name: Arrange
+        id: arrange
+        uses: $/.github/actions/tests/helper/arrange-expected-result
+        with:
+          shell: ${{ matrix.shell }}
+          expected-result-bash: jf rt transfer-config-merge \[SOURCE-SERVER-ID\] \[TARGET-SERVER-ID\] --exclude-projects=EXCLUDE-PROJECTS --exclude-repos=EXCLUDE-REPOS --format=FORMAT --include-projects=INCLUDE-PROJECTS --include-repos=INCLUDE-REPOS
+          expected-result-pwsh: jf rt transfer-config-merge [SOURCE-SERVER-ID] [TARGET-SERVER-ID] --exclude-projects=EXCLUDE-PROJECTS --exclude-repos=EXCLUDE-REPOS --format=FORMAT --include-projects=INCLUDE-PROJECTS --include-repos=INCLUDE-REPOS
+
+      - name: Act
+        id: act
+        uses: $/.github/actions/jfrog/rt/jfrog-rt-transfer-config-merge
+        with:
+          source-server-id: '[SOURCE-SERVER-ID]'
+          target-server-id: '[TARGET-SERVER-ID]'
+          exclude-projects: 'EXCLUDE-PROJECTS'
+          exclude-repos: 'EXCLUDE-REPOS'
+          format: 'FORMAT'
+          include-projects: 'INCLUDE-PROJECTS'
+          include-repos: 'INCLUDE-REPOS'
+          shell: ${{ matrix.shell }}
+          is-test: 'true'
+
+      - name: Assert
+        uses: $/.github/actions/tests/helper/assert-result
+        with:
+          result: ${{ steps.act.outputs.command }}
+          expected-result: ${{ steps.arrange.outputs.expected-result }}

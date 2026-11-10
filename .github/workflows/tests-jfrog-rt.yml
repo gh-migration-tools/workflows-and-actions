@@ -1,0 +1,418 @@
+name: Tests actions 'jfrog rt'
+
+on:
+  workflow_run:
+    workflows: ["Tests"]
+    types: [completed]
+
+jobs:
+  setup:
+    name: Setup
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    outputs:
+      test-action-jfrog-rt-build-add-dependencies: ${{ steps.changes.outputs.test-action-jfrog-rt-build-add-dependencies }}
+      test-action-jfrog-rt-build-add-git: ${{ steps.changes.outputs.test-action-jfrog-rt-build-add-git }}
+      test-action-jfrog-rt-build-append: ${{ steps.changes.outputs.test-action-jfrog-rt-build-append }}
+      test-action-jfrog-rt-build-clean: ${{ steps.changes.outputs.test-action-jfrog-rt-build-clean }}
+      test-action-jfrog-rt-build-collect-env: ${{ steps.changes.outputs.test-action-jfrog-rt-build-collect-env }}
+      test-action-jfrog-rt-build-discard: ${{ steps.changes.outputs.test-action-jfrog-rt-build-discard }}
+      test-action-jfrog-rt-build-docker-create: ${{ steps.changes.outputs.test-action-jfrog-rt-build-docker-create }}
+      test-action-jfrog-rt-build-promote: ${{ steps.changes.outputs.test-action-jfrog-rt-build-promote }}
+      test-action-jfrog-rt-build-publish: ${{ steps.changes.outputs.test-action-jfrog-rt-build-publish }}
+      test-action-jfrog-rt-copy: ${{ steps.changes.outputs.test-action-jfrog-rt-copy }}
+      test-action-jfrog-rt-curl: ${{ steps.changes.outputs.test-action-jfrog-rt-curl }}
+      test-action-jfrog-rt-delete: ${{ steps.changes.outputs.test-action-jfrog-rt-delete }}
+      test-action-jfrog-rt-delete-props: ${{ steps.changes.outputs.test-action-jfrog-rt-delete-props }}
+      test-action-jfrog-rt-direct-download: ${{ steps.changes.outputs.test-action-jfrog-rt-direct-download }}
+      test-action-jfrog-rt-docker-promote: ${{ steps.changes.outputs.test-action-jfrog-rt-docker-promote }}
+      test-action-jfrog-rt-download: ${{ steps.changes.outputs.test-action-jfrog-rt-download }}
+      test-action-jfrog-rt-git-lfs-clean: ${{ steps.changes.outputs.test-action-jfrog-rt-git-lfs-clean }}
+      test-action-jfrog-rt-group-add-users: ${{ steps.changes.outputs.test-action-jfrog-rt-group-add-users }}
+      test-action-jfrog-rt-group-create: ${{ steps.changes.outputs.test-action-jfrog-rt-group-create }}
+      test-action-jfrog-rt-group-delete: ${{ steps.changes.outputs.test-action-jfrog-rt-group-delete }}
+      test-action-jfrog-rt-move: ${{ steps.changes.outputs.test-action-jfrog-rt-move }}
+      test-action-jfrog-rt-nuget-deps-tree: ${{ steps.changes.outputs.test-action-jfrog-rt-nuget-deps-tree }}
+      test-action-jfrog-rt-permission-target-create: ${{ steps.changes.outputs.test-action-jfrog-rt-permission-target-create }}
+      test-action-jfrog-rt-permission-target-delete: ${{ steps.changes.outputs.test-action-jfrog-rt-permission-target-delete }}
+      test-action-jfrog-rt-permission-target-template: ${{ steps.changes.outputs.test-action-jfrog-rt-permission-target-template }}
+      test-action-jfrog-rt-permission-target-update: ${{ steps.changes.outputs.test-action-jfrog-rt-permission-target-update }}
+      test-action-jfrog-rt-ping: ${{ steps.changes.outputs.test-action-jfrog-rt-ping }}
+      test-action-jfrog-rt-podman-pull: ${{ steps.changes.outputs.test-action-jfrog-rt-podman-pull }}
+      test-action-jfrog-rt-podman-push: ${{ steps.changes.outputs.test-action-jfrog-rt-podman-push }}
+      test-action-jfrog-rt-replication-create: ${{ steps.changes.outputs.test-action-jfrog-rt-replication-create }}
+      test-action-jfrog-rt-replication-delete: ${{ steps.changes.outputs.test-action-jfrog-rt-replication-delete }}
+      test-action-jfrog-rt-replication-template: ${{ steps.changes.outputs.test-action-jfrog-rt-replication-template }}
+      test-action-jfrog-rt-repo-create: ${{ steps.changes.outputs.test-action-jfrog-rt-repo-create }}
+      test-action-jfrog-rt-repo-delete: ${{ steps.changes.outputs.test-action-jfrog-rt-repo-delete }}
+      test-action-jfrog-rt-repo-template: ${{ steps.changes.outputs.test-action-jfrog-rt-repo-template }}
+      test-action-jfrog-rt-repo-update: ${{ steps.changes.outputs.test-action-jfrog-rt-repo-update }}
+      test-action-jfrog-rt-search: ${{ steps.changes.outputs.test-action-jfrog-rt-search }}
+      test-action-jfrog-rt-set-props: ${{ steps.changes.outputs.test-action-jfrog-rt-set-props }}
+      test-action-jfrog-rt-transfer-config: ${{ steps.changes.outputs.test-action-jfrog-rt-transfer-config }}
+      test-action-jfrog-rt-transfer-config-merge: ${{ steps.changes.outputs.test-action-jfrog-rt-transfer-config-merge }}
+      test-action-jfrog-rt-transfer-files: ${{ steps.changes.outputs.test-action-jfrog-rt-transfer-files }}
+      test-action-jfrog-rt-transfer-plugin-install: ${{ steps.changes.outputs.test-action-jfrog-rt-transfer-plugin-install }}
+      test-action-jfrog-rt-transfer-settings: ${{ steps.changes.outputs.test-action-jfrog-rt-transfer-settings }}
+      test-action-jfrog-rt-upload: ${{ steps.changes.outputs.test-action-jfrog-rt-upload }}
+      test-action-jfrog-rt-user-create: ${{ steps.changes.outputs.test-action-jfrog-rt-user-create }}
+      test-action-jfrog-rt-users-create: ${{ steps.changes.outputs.test-action-jfrog-rt-users-create }}
+      test-action-jfrog-rt-users-delete: ${{ steps.changes.outputs.test-action-jfrog-rt-users-delete }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 2
+
+      - name: Check workflows and actions chnages
+        id: changes
+        shell: bash
+        env:
+          ACTIONS: |
+            jfrog-rt-build-add-dependencies
+            jfrog-rt-build-add-git
+            jfrog-rt-build-append
+            jfrog-rt-build-clean
+            jfrog-rt-build-collect-env
+            jfrog-rt-build-discard
+            jfrog-rt-build-docker-create
+            jfrog-rt-build-promote
+            jfrog-rt-build-publish
+            jfrog-rt-copy
+            jfrog-rt-curl
+            jfrog-rt-delete
+            jfrog-rt-delete-props
+            jfrog-rt-direct-download
+            jfrog-rt-docker-promote
+            jfrog-rt-download
+            jfrog-rt-git-lfs-clean
+            jfrog-rt-group-add-users
+            jfrog-rt-group-create
+            jfrog-rt-group-delete
+            jfrog-rt-move
+            jfrog-rt-nuget-deps-tree
+            jfrog-rt-permission-target-create
+            jfrog-rt-permission-target-delete
+            jfrog-rt-permission-target-template
+            jfrog-rt-permission-target-update
+            jfrog-rt-ping
+            jfrog-rt-podman-pull
+            jfrog-rt-podman-push
+            jfrog-rt-replication-create
+            jfrog-rt-replication-delete
+            jfrog-rt-replication-template
+            jfrog-rt-repo-create
+            jfrog-rt-repo-delete
+            jfrog-rt-repo-template
+            jfrog-rt-repo-update
+            jfrog-rt-search
+            jfrog-rt-set-props
+            jfrog-rt-transfer-config
+            jfrog-rt-transfer-config-merge
+            jfrog-rt-transfer-files
+            jfrog-rt-transfer-plugin-install
+            jfrog-rt-transfer-settings
+            jfrog-rt-upload
+            jfrog-rt-user-create
+            jfrog-rt-users-create
+            jfrog-rt-users-delete
+        run: |
+          check_changed() {
+            ! git diff --quiet HEAD~1 HEAD -- "$1" || ! git diff --quiet HEAD~1 HEAD -- "$2"
+          }
+
+          while IFS= read -r name; do
+            [[ -n "$name" ]] || continue
+            changed=false
+            if check_changed \
+              ".github/actions/jfrog/rt/$name/action.yml" \
+              ".github/workflows/tests-action-$name.yml"; then
+              changed=true
+            fi
+            echo "test-action-$name=$changed" >> "$GITHUB_OUTPUT"
+          done <<< "$ACTIONS"
+
+  # -------------------------------------------------- #
+  # Tests 'jfrog rt' actions                           #
+  # -------------------------------------------------- #
+  tests_action_jfrog_rt_build_add_dependencies:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-build-add-dependencies == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-build-add-dependencies'
+    uses: $/.github/workflows/tests-action-jfrog-rt-build-add-dependencies.yml
+
+  tests_action_jfrog_rt_build_add_git:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-build-add-git == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-build-add-git'
+    uses: $/.github/workflows/tests-action-jfrog-rt-build-add-git.yml
+
+  tests_action_jfrog_rt_build_append:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-build-append == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-build-append'
+    uses: $/.github/workflows/tests-action-jfrog-rt-build-append.yml
+
+  tests_action_jfrog_rt_build_clean:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-build-clean == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-build-clean'
+    uses: $/.github/workflows/tests-action-jfrog-rt-build-clean.yml
+
+  tests_action_jfrog_rt_build_collect_env:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-build-collect-env == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-build-collect-env'
+    uses: $/.github/workflows/tests-action-jfrog-rt-build-collect-env.yml
+
+  tests_action_jfrog_rt_build_discard:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-build-discard == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-build-discard'
+    uses: $/.github/workflows/tests-action-jfrog-rt-build-discard.yml
+
+  tests_action_jfrog_rt_build_docker_create:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-build-docker-create == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-build-docker-create'
+    uses: $/.github/workflows/tests-action-jfrog-rt-build-docker-create.yml
+
+  tests_action_jfrog_rt_build_promote:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-build-promote == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-build-promote'
+    uses: $/.github/workflows/tests-action-jfrog-rt-build-promote.yml
+
+  tests_action_jfrog_rt_build_publish:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-build-publish == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-build-publish'
+    uses: $/.github/workflows/tests-action-jfrog-rt-build-publish.yml
+
+  tests_action_jfrog_rt_copy:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-copy == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-copy'
+    uses: $/.github/workflows/tests-action-jfrog-rt-copy.yml
+
+  tests_action_jfrog_rt_curl:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-curl == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-curl'
+    uses: $/.github/workflows/tests-action-jfrog-rt-curl.yml
+
+  tests_action_jfrog_rt_delete:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-delete == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-delete'
+    uses: $/.github/workflows/tests-action-jfrog-rt-delete.yml
+
+  tests_action_jfrog_rt_delete_props:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-delete-props == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-delete-props'
+    uses: $/.github/workflows/tests-action-jfrog-rt-delete-props.yml
+
+  tests_action_jfrog_rt_direct_download:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-direct-download == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-direct-download'
+    uses: $/.github/workflows/tests-action-jfrog-rt-direct-download.yml
+
+  tests_action_jfrog_rt_docker_promote:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-docker-promote == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-docker-promote'
+    uses: $/.github/workflows/tests-action-jfrog-rt-docker-promote.yml
+
+  tests_action_jfrog_rt_download:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-download == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-download'
+    uses: $/.github/workflows/tests-action-jfrog-rt-download.yml
+
+  tests_action_jfrog_rt_git_lfs_clean:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-git-lfs-clean == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-git-lfs-clean'
+    uses: $/.github/workflows/tests-action-jfrog-rt-git-lfs-clean.yml
+
+  tests_action_jfrog_rt_group_add_users:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-group-add-users == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-group-add-users'
+    uses: $/.github/workflows/tests-action-jfrog-rt-group-add-users.yml
+
+  tests_action_jfrog_rt_group_create:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-group-create == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-group-create'
+    uses: $/.github/workflows/tests-action-jfrog-rt-group-create.yml
+
+  tests_action_jfrog_rt_group_delete:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-group-delete == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-group-delete'
+    uses: $/.github/workflows/tests-action-jfrog-rt-group-delete.yml
+
+  tests_action_jfrog_rt_move:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-move == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-move'
+    uses: $/.github/workflows/tests-action-jfrog-rt-move.yml
+
+  tests_action_jfrog_rt_nuget_deps_tree:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-nuget-deps-tree == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-nuget-deps-tree'
+    uses: $/.github/workflows/tests-action-jfrog-rt-nuget-deps-tree.yml
+
+  tests_action_jfrog_rt_permission_target_create:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-permission-target-create == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-permission-target-create'
+    uses: $/.github/workflows/tests-action-jfrog-rt-permission-target-create.yml
+
+  tests_action_jfrog_rt_permission_target_delete:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-permission-target-delete == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-permission-target-delete'
+    uses: $/.github/workflows/tests-action-jfrog-rt-permission-target-delete.yml
+
+  tests_action_jfrog_rt_permission_target_template:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-permission-target-template == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-permission-target-template'
+    uses: $/.github/workflows/tests-action-jfrog-rt-permission-target-template.yml
+
+  tests_action_jfrog_rt_permission_target_update:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-permission-target-update == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-permission-target-update'
+    uses: $/.github/workflows/tests-action-jfrog-rt-permission-target-update.yml
+
+  tests_action_jfrog_rt_ping:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-ping == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-ping'
+    uses: $/.github/workflows/tests-action-jfrog-rt-ping.yml
+
+  tests_action_jfrog_rt_podman_pull:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-podman-pull == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-podman-pull'
+    uses: $/.github/workflows/tests-action-jfrog-rt-podman-pull.yml
+
+  tests_action_jfrog_rt_podman_push:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-podman-push == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-podman-push'
+    uses: $/.github/workflows/tests-action-jfrog-rt-podman-push.yml
+
+  tests_action_jfrog_rt_replication_create:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-replication-create == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-replication-create'
+    uses: $/.github/workflows/tests-action-jfrog-rt-replication-create.yml
+
+  tests_action_jfrog_rt_replication_delete:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-replication-delete == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-replication-delete'
+    uses: $/.github/workflows/tests-action-jfrog-rt-replication-delete.yml
+
+  tests_action_jfrog_rt_replication_template:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-replication-template == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-replication-template'
+    uses: $/.github/workflows/tests-action-jfrog-rt-replication-template.yml
+
+  tests_action_jfrog_rt_repo_create:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-repo-create == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-repo-create'
+    uses: $/.github/workflows/tests-action-jfrog-rt-repo-create.yml
+
+  tests_action_jfrog_rt_repo_delete:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-repo-delete == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-repo-delete'
+    uses: $/.github/workflows/tests-action-jfrog-rt-repo-delete.yml
+
+  tests_action_jfrog_rt_repo_template:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-repo-template == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-repo-template'
+    uses: $/.github/workflows/tests-action-jfrog-rt-repo-template.yml
+
+  tests_action_jfrog_rt_repo_update:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-repo-update == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-repo-update'
+    uses: $/.github/workflows/tests-action-jfrog-rt-repo-update.yml
+
+  tests_action_jfrog_rt_search:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-search == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-search'
+    uses: $/.github/workflows/tests-action-jfrog-rt-search.yml
+
+  tests_action_jfrog_rt_set_props:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-set-props == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-set-props'
+    uses: $/.github/workflows/tests-action-jfrog-rt-set-props.yml
+
+  tests_action_jfrog_rt_transfer_config:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-transfer-config == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-transfer-config'
+    uses: $/.github/workflows/tests-action-jfrog-rt-transfer-config.yml
+
+  tests_action_jfrog_rt_transfer_config_merge:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-transfer-config-merge == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-transfer-config-merge'
+    uses: $/.github/workflows/tests-action-jfrog-rt-transfer-config-merge.yml
+
+  tests_action_jfrog_rt_transfer_files:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-transfer-files == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-transfer-files'
+    uses: $/.github/workflows/tests-action-jfrog-rt-transfer-files.yml
+
+  tests_action_jfrog_rt_transfer_plugin_install:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-transfer-plugin-install == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-transfer-plugin-install'
+    uses: $/.github/workflows/tests-action-jfrog-rt-transfer-plugin-install.yml
+
+  tests_action_jfrog_rt_transfer_settings:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-transfer-settings == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-transfer-settings'
+    uses: $/.github/workflows/tests-action-jfrog-rt-transfer-settings.yml
+
+  tests_action_jfrog_rt_upload:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-upload == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-upload'
+    uses: $/.github/workflows/tests-action-jfrog-rt-upload.yml
+
+  tests_action_jfrog_rt_user_create:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-user-create == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-user-create'
+    uses: $/.github/workflows/tests-action-jfrog-rt-user-create.yml
+
+  tests_action_jfrog_rt_users_create:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-users-create == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-users-create'
+    uses: $/.github/workflows/tests-action-jfrog-rt-users-create.yml
+
+  tests_action_jfrog_rt_users_delete:
+    if: ${{ needs.setup.outputs.test-action-jfrog-rt-users-delete == 'true' }}
+    needs: setup
+    name: Tests action 'jfrog-rt-users-delete'
+    uses: $/.github/workflows/tests-action-jfrog-rt-users-delete.yml

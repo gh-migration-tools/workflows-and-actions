@@ -1,0 +1,37 @@
+name: Tests action 'jfrog-mvn-config'
+
+on:
+  workflow_call:
+
+jobs:
+  should_return_command:
+    name: Should return command (${{ matrix.shell }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shell: [bash, pwsh]
+    steps:
+      - name: Act
+        id: act
+        uses: $/.github/actions/jfrog/package-managers/jfrog-mvn-config
+        with:
+          disable-snapshots: 'true'
+          exclude-patterns: 'EXCLUDE-PATTERNS'
+          global: 'true'
+          include-patterns: 'INCLUDE-PATTERNS'
+          repo-deploy-releases: 'REPO-DEPLOY-RELEASES'
+          repo-deploy-snapshots: 'REPO-DEPLOY-SNAPSHOTS'
+          repo-resolve-releases: 'REPO-RESOLVE-RELEASES'
+          repo-resolve-snapshots: 'REPO-RESOLVE-SNAPSHOTS'
+          server-id-deploy: 'SERVER-ID-DEPLOY'
+          server-id-resolve: 'SERVER-ID-RESOLVE'
+          snapshots-update-policy: 'SNAPSHOTS-UPDATE-POLICY'
+          use-wrapper: 'true'
+          shell: ${{ matrix.shell }}
+          is-test: 'true'
+
+      - name: Assert
+        uses: $/.github/actions/tests/helper/assert-result
+        with:
+          result: ${{ steps.act.outputs.command }}
+          expected-result: jf mvn-config --disable-snapshots --exclude-patterns=EXCLUDE-PATTERNS --global --include-patterns=INCLUDE-PATTERNS --repo-deploy-releases=REPO-DEPLOY-RELEASES --repo-deploy-snapshots=REPO-DEPLOY-SNAPSHOTS --repo-resolve-releases=REPO-RESOLVE-RELEASES --repo-resolve-snapshots=REPO-RESOLVE-SNAPSHOTS --server-id-deploy=SERVER-ID-DEPLOY --server-id-resolve=SERVER-ID-RESOLVE --snapshots-update-policy=SNAPSHOTS-UPDATE-POLICY --use-wrapper

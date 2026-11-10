@@ -1,0 +1,33 @@
+name: Assert result
+description: Assert result
+
+inputs:
+  result:
+    description: result
+    required: true
+  expected-result:
+    description: expected-result
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Assert
+      shell: bash
+      env:
+        RESULT: ${{ inputs.result }}
+        EXPECTED_RESULT: ${{ inputs.expected-result }}
+      run: |
+        result="${RESULT}"
+        expected_result="${EXPECTED_RESULT}"
+
+        echo "result:"
+        echo "$result"
+
+        if [[ "$result" != "$expected_result" ]]; then
+          echo ""
+          echo "expected result:"
+          echo "$expected_result"
+          echo "::error::The result don't match the expected result."
+          exit 1
+        fi

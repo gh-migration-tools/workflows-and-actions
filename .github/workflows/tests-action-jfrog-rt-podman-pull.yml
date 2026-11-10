@@ -1,0 +1,48 @@
+name: Tests action 'jfrog-rt-podman-pull'
+
+on:
+  workflow_call:
+
+jobs:
+  should_return_command:
+    name: Should return command (${{ matrix.shell }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shell: [bash, pwsh]
+    steps:
+      - name: Arrange
+        id: arrange
+        uses: $/.github/actions/tests/helper/arrange-expected-result
+        with:
+          shell: ${{ matrix.shell }}
+          expected-result-bash: jf rt podman-pull \[IMAGE-TAG\] \[SOURCE-REPO\] --format=FORMAT --access-token=ACCESS-TOKEN --build-name=BUILD-NAME --build-number=BUILD-NUMBER --module=MODULE --password=PASSWORD --project=PROJECT --server-id=SERVER-ID --skip-login --ssh-key-path=SSH-KEY-PATH --ssh-passphrase=SSH-PASSPHRASE --url=URL --user=USER
+          expected-result-pwsh: jf rt podman-pull [IMAGE-TAG] [SOURCE-REPO] --format=FORMAT --access-token=ACCESS-TOKEN --build-name=BUILD-NAME --build-number=BUILD-NUMBER --module=MODULE --password=PASSWORD --project=PROJECT --server-id=SERVER-ID --skip-login --ssh-key-path=SSH-KEY-PATH --ssh-passphrase=SSH-PASSPHRASE --url=URL --user=USER
+
+      - name: Act
+        id: act
+        uses: $/.github/actions/jfrog/rt/jfrog-rt-podman-pull
+        with:
+          image-tag: '[IMAGE-TAG]'
+          source-repo: '[SOURCE-REPO]'
+          format: 'FORMAT'
+          access-token: 'ACCESS-TOKEN'
+          build-name: 'BUILD-NAME'
+          build-number: 'BUILD-NUMBER'
+          module: 'MODULE'
+          password: 'PASSWORD'
+          project: 'PROJECT'
+          server-id: 'SERVER-ID'
+          skip-login: 'true'
+          ssh-key-path: 'SSH-KEY-PATH'
+          ssh-passphrase: 'SSH-PASSPHRASE'
+          url: 'URL'
+          user: 'USER'
+          shell: ${{ matrix.shell }}
+          is-test: 'true'
+
+      - name: Assert
+        uses: $/.github/actions/tests/helper/assert-result
+        with:
+          result: ${{ steps.act.outputs.command }}
+          expected-result: ${{ steps.arrange.outputs.expected-result }}

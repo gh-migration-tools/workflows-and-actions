@@ -1,0 +1,90 @@
+name: Tests action 'jfrog-rt-build-add-dependencies'
+
+on:
+  workflow_call:
+
+jobs:
+  should_return_command:
+    name: Should return command (${{ matrix.shell }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shell: [bash, pwsh]
+    steps:
+      - name: Arrange
+        id: arrange
+        uses: $/.github/actions/tests/helper/arrange-expected-result
+        with:
+          shell: ${{ matrix.shell }}
+          expected-result-bash: jf rt build-add-dependencies \[BUILD-NAME\] \[BUILD-NUMBER\] \[PATTERN\] --format=FORMAT --dry-run --exclusions=EXCLUSIONS --from-rt --module=MODULE --project=PROJECT --recursive --regexp --server-id=SERVER-ID --spec=SPEC --spec-vars=SPEC-VARS
+          expected-result-pwsh: jf rt build-add-dependencies [BUILD-NAME] [BUILD-NUMBER] [PATTERN] --format=FORMAT --dry-run --exclusions=EXCLUSIONS --from-rt --module=MODULE --project=PROJECT --recursive --regexp --server-id=SERVER-ID --spec=SPEC --spec-vars=SPEC-VARS
+
+      - name: Act
+        id: act
+        uses: $/.github/actions/jfrog/rt/jfrog-rt-build-add-dependencies
+        with:
+          build-name: '[BUILD-NAME]'
+          build-number: '[BUILD-NUMBER]'
+          pattern: '[PATTERN]'
+          format: 'FORMAT'
+          dry-run: 'true'
+          exclusions: 'EXCLUSIONS'
+          from-rt: 'true'
+          module: 'MODULE'
+          project: 'PROJECT'
+          recursive: 'true'
+          regexp: 'true'
+          server-id: 'SERVER-ID'
+          spec:  'SPEC'
+          spec-vars: 'SPEC-VARS'
+          shell: ${{ matrix.shell }}
+          is-test: 'true'
+
+      - name: Assert
+        uses: $/.github/actions/tests/helper/assert-result
+        with:
+          result: ${{ steps.act.outputs.command }}
+          expected-result: ${{ steps.arrange.outputs.expected-result }}
+
+  should_create_spec_file:
+    name: Should create spec file (${{ matrix.shell }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shell: [bash, pwsh]
+    steps:
+      - name: Arrange
+        id: arrange
+        uses: $/.github/actions/tests/helper/arrange-expected-result
+        with:
+          shell: ${{ matrix.shell }}
+          expected-result-bash: jf rt build-add-dependencies \[BUILD-NAME\] \[BUILD-NUMBER\] \[PATTERN\] --spec=spec.json
+          expected-result-pwsh: jf rt build-add-dependencies [BUILD-NAME] [BUILD-NUMBER] [PATTERN] --spec=spec.json
+
+      - name: Act
+        id: act
+        uses: $/.github/actions/jfrog/rt/jfrog-rt-build-add-dependencies
+        with:
+          build-name: '[BUILD-NAME]'
+          build-number: '[BUILD-NUMBER]'
+          pattern: '[PATTERN]'
+          spec-json: |
+            {
+              "files": []
+            }
+          shell: ${{ matrix.shell }}
+          is-test: 'true'
+
+      - name: Assert
+        uses: $/.github/actions/tests/helper/assert-result
+        with:
+          result: ${{ steps.act.outputs.command }}
+          expected-result: ${{ steps.arrange.outputs.expected-result }}
+
+      - name: Assert 'specs.json' file
+        shell: bash
+        run: |
+          if [[ ! -f 'spec.json' ]]; then
+            echo 'spec.json was not found' >&2
+            exit 1
+          fi
