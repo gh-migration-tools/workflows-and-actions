@@ -32,7 +32,7 @@ on:
       poll-interval-seconds:
         description: Poll interval seconds
         required: false
-        type: string
+        type: number
         default: 15
       runner:
         description: The runner label

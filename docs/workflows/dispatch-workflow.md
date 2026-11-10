@@ -16,34 +16,34 @@ This reusable workflow is invoked by another workflow using `workflow_call`.
 
 ## Inputs
 
-| Name | Type | Required | Default | Description |
-| --- | --- | --- | --- | --- |
-| `client-id` | string | yes |  | GitHub App client ID |
-| `api-url` | string | no | `https://api.github.com` | GitHub API URL |
-| `owner-repo` | string | yes |  | Repository name with owner |
-| `ref` | string | yes |  | The branch, tag or SHA |
-| `workflow-file` | string | yes |  | Workflow file name |
-| `payload-inputs-json` | string | no | `{}` | JSON object string passed as workflow_dispatch inputs |
-| `poll-interval-seconds` | string | no | `15` | Poll interval seconds |
-| `runner` | string | no | `ubuntu-latest` | The runner label |
-| `timeout-minutes` | number | no | `360` | The runner timeout |
+| Name                    | Type   | Required | Default                  | Description                                           |
+| ----------------------- | ------ | -------- | ------------------------ | ----------------------------------------------------- |
+| `client-id`             | string | yes      |                          | GitHub App client ID                                  |
+| `api-url`               | string | no       | `https://api.github.com` | GitHub API URL                                        |
+| `owner-repo`            | string | yes      |                          | Repository name with owner                            |
+| `ref`                   | string | yes      |                          | The branch, tag or SHA                                |
+| `workflow-file`         | string | yes      |                          | Workflow file name                                    |
+| `payload-inputs-json`   | string | no       | `{}`                     | JSON object string passed as workflow_dispatch inputs |
+| `poll-interval-seconds` | number | no       | `15`                     | Poll interval seconds                                 |
+| `runner`                | string | no       | `ubuntu-latest`          | The runner label                                      |
+| `timeout-minutes`       | number | no       | `360`                    | The runner timeout                                    |
 
 ## Secrets
 
-| Name | Required | Description |
-| --- | --- | --- |
-| `private-key` | yes | GitHub App private key |
+| Name          | Required | Description            |
+| ------------- | -------- | ---------------------- |
+| `private-key` | yes      | GitHub App private key |
 
 ## Outputs
 
-| Name | Description |
-| --- | --- |
-| `run-id` | The run ID |
-| `run-number` | The run number |
-| `run-name` | The run name |
-| `status` | The run status |
-| `conclusion` | The run conclusion |
-| `workflow-id` | The workflow ID |
+| Name          | Description        |
+| ------------- | ------------------ |
+| `run-id`      | The run ID         |
+| `run-number`  | The run number     |
+| `run-name`    | The run name       |
+| `status`      | The run status     |
+| `conclusion`  | The run conclusion |
+| `workflow-id` | The workflow ID    |
 
 ## Example
 
